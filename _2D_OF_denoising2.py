@@ -2,85 +2,79 @@ import numpy as np
 import scipy.ndimage
 import cv2
 
-N = 3
-
 ofca_extension_mode = cv2.BORDER_REPLICATE
 
-def warp_line(reference_line, flow):
-  reference = np.stack([reference_line, reference_line, reference_line])
+def warp_slice(reference_slice, flow):
   height, width = flow.shape[:2]
   map_x = np.tile(np.arange(width), (height, 1))
   map_y = np.swapaxes(np.tile(np.arange(height), (width, 1)), 0, 1)
   map_xy = (flow + np.dstack((map_x, map_y))).astype('float32')
-  return cv2.remap(reference, map_xy, None, interpolation=cv2.INTER_LINEAR, borderMode=ofca_extension_mode)[N//2, ...]
+  return cv2.remap(reference_slice, map_xy, None, interpolation=cv2.INTER_LINEAR, borderMode=ofca_extension_mode)
 
-def get_flow(reference_line, target_line, l, w):
-  # Farneback requires at least two lines
-  reference = np.stack([reference_line for i in range(N)])
-  #reference = np.stack([reference_line, reference_line, reference_line])
-  print("get_flow: reference =", reference[1,...][0:10])
-  #target = np.stack([target_line, target_line, target_line])
-  target = np.stack([target_line for i in range(N)])
-  print("get_flow: target    =", target[1,...][0:10])
-  flow = cv2.calcOpticalFlowFarneback(prev=target, next=reference, flow=None, pyr_scale=0.5, levels=l, winsize=w, iterations=3, poly_n=5, poly_sigma=1.2, flags=0)
-  # flow returns a field in which N lines are the same
-  #flow = np.zeros((reference.shape[0], reference.shape[1], 2), dtype=np.float32)
-  #print("get_flow: flow =", flow[1,...][0:10])
-  print("get_flow: max =", np.max(flow))
-  print("get_flow: min =", np.min(flow))
+def get_flow(reference_slice, target_slice, l, w):
+  flow = cv2.calcOpticalFlowFarneback(prev=target_slice, next=reference_slice, flow=None, pyr_scale=0.5, levels=l, winsize=w, iterations=3, poly_n=5, poly_sigma=1.2, flags=0)
+  print("<", np.max(flow), ">")
   return flow
 
-def filter_over_Y(image, kernel, l, w):
-  filtered_image = np.zeros_like(image).astype(np.float32)
-  shape_of_image = np.shape(image)
-  padded_image = np.zeros(shape=(shape_of_image[0] + kernel.size, shape_of_image[1]))
-  padded_image[kernel.size//2:shape_of_image[0] + kernel.size//2, :] = image
-  Y_dim = image.shape[0]
-  for y in range(Y_dim):
-    tmp_line = np.zeros_like(image[y, :]).astype(np.float32)
+def filter_over_Y(stack, kernel, l, w):
+  filtered_stack = np.zeros_like(stack).astype(np.float32)
+  shape_of_stack = np.shape(stack)
+  padded_stack = np.zeros(shape=(shape_of_stack[0], shape_of_stack[1] + kernel.size, shape_of_stack[2]))
+  padded_stack[:, kernel.size//2:shape_of_stack[1] + kernel.size//2, :] = stack
+  Y_dim = stack.shape[1]
+  for y in range(0,Y_dim,1):
+    tmp_slice = np.zeros_like(stack[:, y, :]).astype(np.float32)
     for i in range(kernel.size):
       if i != kernel.size//2:
-        #reference = np.stack([padded_image[y + i, :] for i in range(N)])
-        #target = np.stack([image[y, :] for i in range(N)])
-        flow = get_flow(padded_image[y + i, :], image[y, :], l, w)
-        #flow = get_flow(reference, target, l, w)
-        OF_compensated_line = warp_line(padded_image[y + i, :], flow)
-        #OF_compensated_line = warp_slice(reference, flow)[N//2, ...]
-        #tmp_slice += OF_compensated_slice * kernel[i]
-        tmp_line += OF_compensated_line * kernel[i]
+        flow = get_flow(padded_stack[:, y + i, :], stack[:, y, :], l, w)
+        OF_compensated_slice = warp_slice(padded_stack[:, y + i, :], flow)
+        tmp_slice += OF_compensated_slice * kernel[i]
       else:
         # No OF is needed for this slice
-        #tmp_slice += image[:, y - kernel.size//2, :] * kernel[kernel.size // 2]
-        tmp_line += image[y, :] * kernel[i]
-    filtered_image[y, :] = tmp_line
+        tmp_slice += stack[:, y, :] * kernel[i]
+    filtered_stack[:, y, :] = tmp_slice
     print(y, end=' ', flush=True)
   print()
-  return filtered_image
+  return filtered_stack
 
-def filter_over_X(image, kernel, l, w):
-  filtered_image = np.zeros_like(image).astype(np.float32)
-  shape_of_image = np.shape(image)
-  padded_image = np.zeros(shape=(shape_of_image[0], shape_of_image[1] + kernel.size))
-  padded_image[:, kernel.size//2:shape_of_image[1] + kernel.size//2] = image
-  X_dim = image.shape[1]
-  for x in range(X_dim):
-    tmp_line = np.zeros_like(image[:, x]).astype(np.float32)
+def filter_over_X(stack, kernel, l, w):
+  filtered_stack = np.zeros_like(stack).astype(np.float32)
+  shape_of_stack = np.shape(stack)
+  padded_stack = np.zeros(shape=(shape_of_stack[0], shape_of_stack[1], shape_of_stack[2] + kernel.size))
+  padded_stack[:, :, kernel.size//2:shape_of_stack[2] + kernel.size//2] = stack
+  X_dim = stack.shape[2]
+  for x in range(0,X_dim,1):
+    tmp_slice = np.zeros_like(stack[:, :, x]).astype(np.float32)
     for i in range(kernel.size):
       if i != kernel.size//2:
-        flow = get_flow(padded_image[:, x + i], image[:, x], l, w)
-        OF_compensated_line = warp_line(padded_image[:, x + i], flow)
-        tmp_slice += OF_compensated_line * kernel[i]
+        flow = get_flow(padded_stack[:, :, x + i], stack[:, :, x], l, w)
+        OF_compensated_slice = warp_slice(padded_stack[:, :, x + i], flow)
+        tmp_slice += OF_compensated_slice * kernel[i]
       else:
         # No OF is needed for this slice
-        #tmp_slice += image[:, :, x - kernel.size//2] * kernel[kernel.size // 2]
-        tmp_line += image[:, x] * kernel[i]
-    filtered_image[:, x] = tmp_line
+        tmp_slice += stack[:, :, x] * kernel[i]
+    filtered_stack[:, :, x] = tmp_slice
     print(x, end=' ', flush=True)
   print()
-  return filtered_image
+  return filtered_stack
 
-def filter(image, kernel, l, w):
-  print(f"image.shape={image.shape} kernel.shape={kernel.shape} l={l} w={w}")
-  filtered_image_Y = filter_over_Y(image, kernel, l, w)
-  filtered_image_YX = filter_over_X(filtered_image_Y, kernel, l, w)
-  return filtered_image_YX
+N = 17
+
+def filter(img, kernel, l, w):
+  print(f"img.shape={img.shape} kernel.shape={kernel.shape} l={l} w={w}")
+  #img_zeros = np.zeros_like(img)
+  #stack = np.stack([img_zeros, img, img_zeros])
+  #stack = np.stack([img, img, img]
+  stack = np.stack([np.roll(img, i, axis=0) for i in range(N)])
+  filtered_Y_img = filter_over_Y(stack, kernel, l, w)[N//2, ...]
+  filtered_Y_img = np.roll(filtered_Y_img, -N//2, axis=0) 
+  #filtered_stack_Y = stack
+  #stack = np.stack([np.roll(filtered_stack_Y,i) for i in range(N)])
+  
+  stack = np.stack([np.roll(filtered_Y_img, i, axis=1) for i in range(N)])
+  filtered_YX_img = filter_over_X(stack, kernel, l, w)[N//2, ...]
+  filtered_YX_img = np.roll(filtered_YX_img, -N//2, axis=1) 
+  #filtered_stack_YX = filter_over_Y(filtered_stack_Y.T, kernel, l, w)
+  #filtered_stack_YX = filtered_stack_Y
+  return filtered_YX_img
+  #return filtered_stack_YX.T[N//2, ...]

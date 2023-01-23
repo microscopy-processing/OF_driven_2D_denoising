@@ -1,0 +1,5 @@
+https://github.com/theHamsta/farneback3d
+https://dspace.mit.edu/bitstream/handle/1721.1/6609/AIM-1375.pdf;jsessionid=ABCAFB6B117EC31E940AE6B362CB3C37?sequence=2
+https://www.cs.toronto.edu/~fleet/research/Papers/flowChapter05.pdf
+https://www.sciencedirect.com/science/article/abs/pii/S016502702100011X
+https://github.com/ericPrince/optical-flow/blob/master/optical_flow.py
