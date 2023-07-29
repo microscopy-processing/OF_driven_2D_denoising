@@ -70,8 +70,10 @@ def color_gaussian_filtering(img, kernel):
 
 def filter_gray_image(img, sigma=2.5, N_iters=1.0):
     kernel = kernels.get_gaussian_kernel(sigma)
-    denoised = noisy.copy()
+    denoised = img.copy()
     for i in range(N_iters):
+        if __debug__:
+            prev = denoised
         denoised = gray_gaussian_filtering(denoised, kernel)
         if __debug__:
             fig, axs = plt.subplots(1, 2, figsize=(10, 20))
@@ -87,6 +89,8 @@ def filter_color_image(img, sigma=2.5, N_iters=1.0):
     kernel = kernels.get_gaussian_kernel(sigma)
     denoised = noisy.copy()
     for i in range(N_iters):
+        if __debug__:
+            prev = denoised
         denoised = color_gaussian_filtering(denoised, kernel)
         if __debug__:
             fig, axs = plt.subplots(1, 2, figsize=(10, 20))
