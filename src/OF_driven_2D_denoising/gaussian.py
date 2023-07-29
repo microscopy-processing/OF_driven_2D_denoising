@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import scipy
 import math
-import kernels
+from . import kernels
 #pip install "color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/color_transforms"
 from color_transforms import YCoCg as YUV
 

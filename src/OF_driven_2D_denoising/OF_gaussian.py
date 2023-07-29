@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import scipy
 import math
-import kernels
+from . import kernels
 import flow
 
 #pip install "color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/color_transforms"
