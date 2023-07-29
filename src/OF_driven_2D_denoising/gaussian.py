@@ -87,7 +87,7 @@ def filter_gray_image(img, sigma=2.5, N_iters=1.0):
 
 def filter_color_image(img, sigma=2.5, N_iters=1.0):
     kernel = kernels.get_gaussian_kernel(sigma)
-    denoised = noisy.copy()
+    denoised = img.copy()
     for i in range(N_iters):
         if __debug__:
             prev = denoised
