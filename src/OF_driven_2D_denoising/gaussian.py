@@ -9,6 +9,11 @@ from color_transforms import YCoCg as YUV
 
 if __debug__:
     from matplotlib import pyplot as plt
+    
+    def normalize(img):
+        min_img = np.min(img)
+        max_img = np.max(img)
+        return 255*((img - min_img)/(max_img - min_img))
 
 def vertical_gaussian_filtering(img, kernel, mean):
     KL = kernel.size
