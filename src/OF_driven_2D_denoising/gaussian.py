@@ -82,3 +82,18 @@ def filter_gray_image(img, sigma=2.5, N_iters=1.0):
             plt.show()
             print(f"\niter={i}")
     return denoised
+
+def filter_color_image(img, sigma=2.5, N_iters=1.0):
+    kernel = kernels.get_gaussian_kernel(sigma)
+    denoised = noisy.copy()
+    for i in range(N_iters):
+        denoised = color_gaussian_filtering(denoised, kernel)
+        if __debug__:
+            fig, axs = plt.subplots(1, 2, figsize=(10, 20))
+            axs[0].imshow(normalize(denoised), cmap="gray")
+            axs[0].set_title(f"iter {i}")
+            axs[1].imshow(normalize(denoised - prev + 128), cmap="gray")
+            axs[1].set_title(f"diff")
+            plt.show()
+            print(f"\niter={i}")
+    return denoised
