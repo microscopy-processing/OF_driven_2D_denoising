@@ -24,6 +24,6 @@ dynamic = ["dependencies"]
 dependencies = {file = ["requirements.txt"]}
 
 [project.urls]
-"Homepage" = "https://github.com/microscopy-processing/OF-driven_2D_denoising"
-"Bug Tracker" = "https://github.com/microscopy-processing/OF-driven_2D_denoising/issues"
+"Homepage" = "https://github.com/microscopy-processing/OF_driven_2D_denoising"
+"Bug Tracker" = "https://github.com/microscopy-processing/OF_driven_2D_denoising/issues"
 
