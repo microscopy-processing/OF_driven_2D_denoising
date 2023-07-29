@@ -4,7 +4,7 @@ requires = ["hatchling", "setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "OF-driven_2D_denoising"
+name = "OF_driven_2D_denoising"
 version = "0.0.1"
 authors = [
   { name="Vicente González Ruiz", email="vruiz@ual.es" },
