@@ -81,7 +81,7 @@ def denoise(
             print(f"PSNR={_PSNR}")
             PSNR_vs_iteration.append(_PSNR)
             axs[0].imshow(denoised_image.astype(np.uint8))
-            axs[0].set_title(f"iter {i} " + f"({PSNR_func(denoised_image, GT):4.2f}dB)")
+            axs[0].set_title(f"iter {i} " + f"({_PSNR:4.2f}dB)")
             axs[1].imshow(normalize(prev - denoised_image + 128).astype(np.uint8), cmap="gray")
             axs[1].set_title(f"diff")
             plt.show()
