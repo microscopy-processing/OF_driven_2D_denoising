@@ -57,7 +57,8 @@ def denoise(
         sigma_RD=1.0,
         l=3,
         w=2,
-        sigma_OF=0.3):
+        sigma_OF=0.3,
+        GT=None):
 
     if __debug__:
         print(iters, mean_RD, sigma_RD, l, w, sigma_OF)
