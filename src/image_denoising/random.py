@@ -46,7 +46,7 @@ def RGB_warp_B_to_A(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
     return project(B, flow)
 
 def warp_B_to_A(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
-    flow = flow_estimatioin.get_flow_to_project_A_to_B(A, B, l, w, prev_flow, sigma)
+    flow = flow_estimation.get_flow_to_project_A_to_B(A, B, l, w, prev_flow, sigma)
     return project(B, flow)
 
 def denoise(
