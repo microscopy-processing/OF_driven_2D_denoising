@@ -14,7 +14,7 @@ def get_flow_to_project_A_to_B(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
         pyr_scale=0.5,
         levels=l,
         winsize=w,
-        iterations=3,
+        iterations=5,
         poly_n=5,
         poly_sigma=sigma,
         flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN)
