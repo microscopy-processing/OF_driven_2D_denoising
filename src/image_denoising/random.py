@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-import flow
+from . import flow_estimation
 #pip install "color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/color_transforms"
 from color_transforms import YCoCg as YUV
 
@@ -39,7 +39,7 @@ def RGB_warp_B_to_A(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
     B_luma = YUV.from_RGB(B.astype(np.int16))[..., 0]
     #A_luma = np.log(YUV.from_RGB(A.astype(np.int16))[..., 0] + 1)
     #B_luma = np.log(YUV.from_RGB(B.astype(np.int16))[..., 0] + 1)
-    flow = flow.get_flow_to_project_A_to_B(A_luma, B_luma, l, w, prev_flow, sigma)
+    flow = flow_estimation.get_flow_to_project_A_to_B(A_luma, B_luma, l, w, prev_flow, sigma)
     return project(B, flow)
 
 def warp_B_to_A(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
