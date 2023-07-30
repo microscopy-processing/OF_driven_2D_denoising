@@ -97,3 +97,16 @@ def denoise(
 
     return denoised_image, PSNR_vs_iteration
 
+def denoise(warp_B_to_A, noisy_image, iters=50, mean_RD=0.0, sigma_RD=1.0, l=3, w=2, sigma_OF=0.3):
+    print(iters, mean_RD, sigma_RD, l, w, sigma_OF)
+    acc_image = np.zeros_like(noisy_image, dtype=np.float32)
+    acc_image[...] = noisy_image
+    for i in range(iters):
+        print(f"iter={i}", end=' ')
+        denoised_image = acc_image/(i+1)
+        randomized_noisy_image = randomize(noisy_image, mean_RD, sigma_RD).astype(np.float32)
+        randomized_and_compensated_noisy_image = warp_B_to_A(A=randomized_noisy_image, B=denoised_image, l=l, w=w, sigma=sigma_OF)
+        acc_image += randomized_and_compensated_noisy_image
+    denoised_image = acc_image/(iters + 1)
+    print()
+    return denoised_image
