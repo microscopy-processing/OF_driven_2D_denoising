@@ -4,7 +4,7 @@ import cv2
 import scipy
 import math
 from . import kernels
-import flow
+from . import flow
 
 #pip install "color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/color_transforms"
 from color_transforms import YCoCg as YUV
@@ -137,10 +137,10 @@ def color_vertical_OF_gaussian_filtering(img, kernel, l=3, w=5, sigma=0.5):
             flow = get_flow_to_project_A_to_B(
                 A=reference_slice_Y,
                 B=target_slice_Y,
-                l,
-                w,
+                l=l,
+                w=w,
                 prev_flow=None,
-                sigma)
+                sigma=sigma)
             OF_compensated_slice = flow.project(reference_slice, flow)
             OF_compensated_line = OF_compensated_slice[(w + 1) >> 1, :, :]
             #OF_compensated_line = OF_compensated_slice[(w + 0) >> 1, :, :]
