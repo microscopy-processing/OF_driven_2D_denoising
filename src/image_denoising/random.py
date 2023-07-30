@@ -72,7 +72,7 @@ def denoise(
             print(f"iter={i}", end=' ')
         denoised_image = acc_image/(i+1)
         if __debug__:
-             _PSNR = information_theory.PSNR(denoised_image, GT)
+             _PSNR = information_theory.distortion.PSNR(denoised_image, GT)
              print(f"PSNR={_PSNR}")
              PSNR_vs_iteration.append(_PSNR)
              axs[0].imshow(denoised_image.astype(np.uint8))
