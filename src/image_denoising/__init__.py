@@ -6,3 +6,5 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
 #logger.setLevel(logging.DEBUG)
+
+logger.info("__init__ run")
