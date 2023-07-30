@@ -161,10 +161,13 @@ def color_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5):
     OF_filtered_noisy_image = np.transpose(filtered_noisy_image_YX, (1, 0, 2))
     return OF_filtered_noisy_image
 
+
 def filter_gray_image(noisy_image, sigma_kernel=2.5, N_iters=1, l=3, w=9, sigma_OF=2.5):
     kernel = kernels.get_gaussian_kernel(sigma_kernel)
     denoised = noisy_image.copy()
     for i in range(N_iters):
+        if __debug__:
+            prev = denoised
         denoised = gray_OF_gaussian_filtering(denoised, kernel, l, w, sigma_OF)
         if __debug__:
             fig, axs = plt.subplots(1, 2, figsize=(10, 20))
@@ -175,3 +178,21 @@ def filter_gray_image(noisy_image, sigma_kernel=2.5, N_iters=1, l=3, w=9, sigma_
             plt.show()
             print(f"\niter={i}")
     return denoised
+
+def filter_color_image(noisy_image, sigma_kernel=2.5, N_iters=1, l=3, w=9, sigma_OF=2.5):
+    kernel = kernels.get_gaussian_kernel(sigma_kernel)
+    denoised = noisy_image.copy()
+    for i in range(N_iters):
+        if __debug__:
+            prev = denoised
+        denoised = color_OF_gaussian_filtering(denoised, kernel, l, w, sigma_OF)
+        if __debug__:
+            fig, axs = plt.subplots(1, 2, figsize=(10, 20))
+            axs[0].imshow(normalize(denoised), cmap="gray")
+            axs[0].set_title(f"iter {i}")
+            axs[1].imshow(normalize(denoised - prev + 128), cmap="gray")
+            axs[1].set_title(f"diff")
+            plt.show()
+            print(f"\niter={i}")
+    return denoised
+
