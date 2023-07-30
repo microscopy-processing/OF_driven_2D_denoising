@@ -9,7 +9,7 @@ def get_flow_to_project_A_to_B(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
     flow = motion_estimation.farneback.get_flow(
         reference=A,
         target=B,
-        flow=prev_flow,
+        prev_flow=prev_flow,
         pyr_scale=0.5,
         levels=l,
         winsize=w,
