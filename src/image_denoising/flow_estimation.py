@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 #pip install "color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/motion_estimation"
+from motion_estimation import farneback
 import motion_estimation
 
 def get_flow_to_project_A_to_B(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
