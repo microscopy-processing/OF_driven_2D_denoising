@@ -74,14 +74,17 @@ def denoise(
             print(f"iter={i}", end=' ')
         denoised_image = acc_image/(i+1)
         if __debug__:
-             _PSNR = information_theory.distortion.PSNR(denoised_image, GT)
-             print(f"PSNR={_PSNR}")
-             PSNR_vs_iteration.append(_PSNR)
-             axs[0].imshow(denoised_image.astype(np.uint8))
-             axs[0].set_title(f"iter {i} " + f"({PSNR_func(denoised_image, GT):4.2f}dB)")
-             axs[1].imshow(normalize(prev - denoised_image + 128).astype(np.uint8), cmap="gray")
-             axs[1].set_title(f"diff")
-             plt.show()
+            if GT != None:
+                _PSNR = information_theory.distortion.PSNR(denoised_image, GT)
+            else:
+                _PSNR = 0.0
+            print(f"PSNR={_PSNR}")
+            PSNR_vs_iteration.append(_PSNR)
+            axs[0].imshow(denoised_image.astype(np.uint8))
+            axs[0].set_title(f"iter {i} " + f"({PSNR_func(denoised_image, GT):4.2f}dB)")
+            axs[1].imshow(normalize(prev - denoised_image + 128).astype(np.uint8), cmap="gray")
+            axs[1].set_title(f"diff")
+            plt.show()
         randomized_noisy_image = randomize(noisy_image, mean_RD, sigma_RD).astype(np.float32)
         randomized_and_compensated_noisy_image = warp_B_to_A(
             A=randomized_noisy_image,
@@ -91,8 +94,6 @@ def denoise(
             sigma=sigma_OF)
         acc_image += randomized_and_compensated_noisy_image
     denoised_image = acc_image/(iters + 1)
-    if __debug__:
-        print()
-        return denoised_image, PSNR_vs_iteration
-    else:
-        return denoised_image
+
+    return denoised_image, PSNR_vs_iteration
+
