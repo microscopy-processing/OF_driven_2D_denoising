@@ -62,6 +62,7 @@ def denoise(
 
     acc_image = np.zeros_like(noisy_image, dtype=np.float32)
     acc_image[...] = noisy_image
+    denoised_image = noisy_image
     for i in range(iters):
         if __debug__:
             fig, axs = plt.subplots(1, 2)
