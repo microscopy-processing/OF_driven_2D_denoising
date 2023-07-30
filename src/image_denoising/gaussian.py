@@ -15,67 +15,67 @@ if __debug__:
         max_img = np.max(img)
         return 255*((img - min_img)/(max_img - min_img))
 
-def vertical_gaussian_filtering(img, kernel, mean):
+def vertical_gaussian_filtering(noisy_image, kernel, mean):
     KL = kernel.size
     KL2 = KL//2
-    extended_img = np.full(fill_value=mean, shape=(img.shape[0] + KL, img.shape[1]))
-    extended_img[KL2:img.shape[0] + KL2, :] = img[:, :]
-    filtered_img = []
-    #filtered_img = np.empty_like(img, dtype=np.float32)
-    N_rows = img.shape[0]
-    N_cols = img.shape[1]
+    extended_noisy_image = np.full(fill_value=mean, shape=(noisy_image.shape[0] + KL, noisy_image.shape[1]))
+    extended_noisy_image[KL2:noisy_image.shape[0] + KL2, :] = noisy_image[:, :]
+    filtered_noisy_image = []
+    #filtered_noisy_image = np.empty_like(noisy_image, dtype=np.float32)
+    N_rows = noisy_image.shape[0]
+    N_cols = noisy_image.shape[1]
     #horizontal_line = np.empty(N_cols, dtype=np.float32)
     #print(horizontal_line.shape)
     for y in range(N_rows):
         #horizontal_line.fill(0)
         horizontal_line = np.zeros(N_cols, dtype=np.float32)
         for i in range(KL):
-            horizontal_line += extended_img[y + i, :] * kernel[i]
-        filtered_img.append(horizontal_line)
-        #filtered_img[y, :] = horizontal_line[:]
-    filtered_img = np.stack(filtered_img, axis=0)
-    return filtered_img
+            horizontal_line += extended_noisy_image[y + i, :] * kernel[i]
+        filtered_noisy_image.append(horizontal_line)
+        #filtered_noisy_image[y, :] = horizontal_line[:]
+    filtered_noisy_image = np.stack(filtered_noisy_image, axis=0)
+    return filtered_noisy_image
 
-def horizontal_gaussian_filtering(img, kernel, mean):
+def horizontal_gaussian_filtering(noisy_image, kernel, mean):
     KL = kernel.size
     KL2 = KL//2
-    extended_img = np.full(fill_value=mean, shape=(img.shape[0], img.shape[1] + KL))
-    extended_img[:, KL2:img.shape[1] + KL2] = img[:, :]
-    #filtered_img = []
-    filtered_img = np.empty_like(img, dtype=np.float32)
-    N_rows = img.shape[0]
-    N_cols = img.shape[1]
+    extended_noisy_image = np.full(fill_value=mean, shape=(noisy_image.shape[0], noisy_image.shape[1] + KL))
+    extended_noisy_image[:, KL2:noisy_image.shape[1] + KL2] = noisy_image[:, :]
+    #filtered_noisy_image = []
+    filtered_noisy_image = np.empty_like(noisy_image, dtype=np.float32)
+    N_rows = noisy_image.shape[0]
+    N_cols = noisy_image.shape[1]
     vertical_line = np.empty(N_rows, dtype=np.float32)
     for x in range(N_cols):
         #vertical_line = np.zeros(N_rows, dtype=np.float32)
         vertical_line.fill(0)
         for i in range(KL):
-            vertical_line += extended_img[:, x + i] * kernel[i]
-        #filtered_img.append(vertical_line)
-        filtered_img[:, x] = vertical_line[:]
-    #filtered_img = np.stack(filtered_img, axis=1)
-    return filtered_img
+            vertical_line += extended_noisy_image[:, x + i] * kernel[i]
+        #filtered_noisy_image.append(vertical_line)
+        filtered_noisy_image[:, x] = vertical_line[:]
+    #filtered_noisy_image = np.stack(filtered_noisy_image, axis=1)
+    return filtered_noisy_image
 
-def gray_gaussian_filtering(img, kernel):
-    mean = np.average(img)
+def gray_gaussian_filtering(noisy_image, kernel):
+    mean = np.average(noisy_image)
     #t0 = time.perf_counter()
-    filtered_img_Y = vertical_gaussian_filtering(img, kernel, mean)
+    filtered_noisy_image_Y = vertical_gaussian_filtering(noisy_image, kernel, mean)
     #t1 = time.perf_counter()
     #print(t1 - t0)
-    filtered_img_YX = horizontal_gaussian_filtering(filtered_img_Y, kernel, mean)
+    filtered_noisy_image_YX = horizontal_gaussian_filtering(filtered_noisy_image_Y, kernel, mean)
     #t2 = time.perf_counter()
     #print(t2 - t1)
-    return filtered_img_YX
+    return filtered_noisy_image_YX
 
-def color_gaussian_filtering(img, kernel):
-    filtered_img_R = gray_gaussian_filtering(img[..., 0], kernel)
-    filtered_img_G = gray_gaussian_filtering(img[..., 1], kernel)
-    filtered_img_B = gray_gaussian_filtering(img[..., 2], kernel)
-    return np.stack([filtered_img_R, filtered_img_G, filtered_img_B], axis=2)
+def color_gaussian_filtering(noisy_image, kernel):
+    filtered_noisy_image_R = gray_gaussian_filtering(noisy_image[..., 0], kernel)
+    filtered_noisy_image_G = gray_gaussian_filtering(noisy_image[..., 1], kernel)
+    filtered_noisy_image_B = gray_gaussian_filtering(noisy_image[..., 2], kernel)
+    return np.stack([filtered_noisy_image_R, filtered_noisy_image_G, filtered_noisy_image_B], axis=2)
 
-def filter_gray_image(img, sigma=2.5, N_iters=1.0):
+def filter_gray_image(noisy_image, sigma=2.5, N_iters=1.0):
     kernel = kernels.get_gaussian_kernel(sigma)
-    denoised = img.copy()
+    denoised = noisy_image.copy()
     for i in range(N_iters):
         if __debug__:
             prev = denoised
@@ -90,9 +90,9 @@ def filter_gray_image(img, sigma=2.5, N_iters=1.0):
             print(f"\niter={i}")
     return denoised
 
-def filter_color_image(img, sigma=2.5, N_iters=1.0):
+def filter_color_image(noisy_image, sigma=2.5, N_iters=1.0):
     kernel = kernels.get_gaussian_kernel(sigma)
-    denoised = img.copy()
+    denoised = noisy_image.copy()
     for i in range(N_iters):
         if __debug__:
             prev = denoised
