@@ -160,7 +160,7 @@ def filter_gray_image(img, sigma_kernel=2.5, N_iters=1, l=3, w=9, sigma_OF=2.5):
     kernel = kernels.get_gaussian_kernel(sigma_kernel)
     denoised = img.copy()
     for i in range(N_iters):
-        denoised = gray_gaussian_filtering(denoised, kernel, l, w, sigma_OF)
+        denoised = gray_OF_gaussian_filtering(denoised, kernel, l, w, sigma_OF)
         if __debug__:
             fig, axs = plt.subplots(1, 2, figsize=(10, 20))
             axs[0].imshow(normalize(denoised), cmap="gray")
