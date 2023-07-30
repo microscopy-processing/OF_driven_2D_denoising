@@ -24,7 +24,9 @@ def get_flow_to_project_A_to_B(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
     #                                    flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN
     #                                   )
     #flow[...] = 0.0
-    print(f"avg_OF={np.average(np.abs(flow))}, l={l}, w={w}, sigma={sigma}", end=' ')
+    logger.info(f"avg_OF={np.average(np.abs(flow))} l={l} w={w} poly_sigma={sigma}")
+
+    #print(f"avg_OF={np.average(np.abs(flow))}, l={l}, w={w}, sigma={sigma}", end=' ')
     return flow
 
 def project(image, flow):
