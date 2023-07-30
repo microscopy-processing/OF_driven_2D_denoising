@@ -5,6 +5,7 @@ from . import flow_estimation
 from color_transforms import YCoCg as YUV
 #pip install "information_theiry @ git+https://github.com/vicente-gonzalez-ruiz/information_theiry"
 from information_theory.distortion import PSNR
+import information_theory
 
 if __debug__:
     from matplotlib import pyplot as plt
