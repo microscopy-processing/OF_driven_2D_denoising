@@ -1,11 +1,11 @@
 import numpy as np
 import cv2
 import image_denoising
-from motion_estimation import farneback
-from motion_estimation import predict
+#from motion_estimation import farneback
+#from motion_estimation import predict
 import motion_estimation
 
-def get_flow_to_project_A_to_B(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
+def get_flow_to_project_A_to_B(A, B, l=3, w=15, prev_flow=None, sigma=1.5, iterations=5):
     # projection(next, flow) ~ prev
     flow = motion_estimation.farneback.get_flow(
         reference=A,
@@ -14,7 +14,7 @@ def get_flow_to_project_A_to_B(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
         pyr_scale=0.5,
         levels=l,
         winsize=w,
-        iterations=5,
+        iterations=iterations,
         poly_n=5,
         poly_sigma=sigma,
         flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN)
@@ -24,7 +24,7 @@ def get_flow_to_project_A_to_B(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
     #                                    flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN
     #                                   )
     #flow[...] = 0.0
-    image_denoising.logger.info(f"avg_OF={np.average(np.abs(flow))} l={l} w={w} poly_sigma={sigma}")
+    image_denoising.logger.info(f"avg_OF={np.average(np.abs(flow)):4.2f} l={l} w={w} sigma={sigma} iters={iterations}")
 
     #print(f"avg_OF={np.average(np.abs(flow))}, l={l}, w={w}, sigma={sigma}", end=' ')
     return flow
