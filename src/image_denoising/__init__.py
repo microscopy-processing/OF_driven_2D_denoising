@@ -11,4 +11,4 @@ logger.info(f"__init__ run")
 
 from image_denoising import gaussian
 from image_denoising import OF_gaussian
-from image_denoising import random
+from image_denoising import OF_random

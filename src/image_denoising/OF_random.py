@@ -6,6 +6,7 @@ from color_transforms import YCoCg as YUV
 #pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
 from information_theory.distortion import PSNR
 import information_theory
+import image_denoising
 
 if __debug__:
     from matplotlib import pyplot as plt
@@ -26,7 +27,8 @@ def randomize(image, mean=0, std_dev=1.0):
     #displacements_y *= max_distance_y
     displacements_x = displacements_x.astype(np.int32)
     displacements_y = displacements_y.astype(np.int32)
-    print(np.max(displacements_x), np.max(displacements_y))
+    
+    image_denoising.logger.debug(np.max(displacements_x), np.max(displacements_y))
     randomized_x_coords = flattened_x_coords + displacements_x
     randomized_y_coords = flattened_y_coords + displacements_y
     randomized_x_coords = np.clip(randomized_x_coords, 0, width - 1) # Clip the randomized coordinates to stay within image bounds
@@ -60,8 +62,8 @@ def denoise(
         sigma_OF=0.3,
         GT=None):
 
+    image_denoising.logger.info(f"iters={iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
     if __debug__:
-        print(iters, mean_RD, sigma_RD, l, w, sigma_OF)
         PSNR_vs_iteration = []
 
     acc_image = np.zeros_like(noisy_image, dtype=np.float32)
@@ -98,7 +100,7 @@ def denoise(
     return denoised_image, PSNR_vs_iteration
 
 def denoise(warp_B_to_A, noisy_image, iters=50, mean_RD=0.0, sigma_RD=1.0, l=3, w=2, sigma_OF=0.3):
-    print(iters, mean_RD, sigma_RD, l, w, sigma_OF)
+    image_denoising.logger.info(f"iters={iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
     acc_image = np.zeros_like(noisy_image, dtype=np.float32)
     acc_image[...] = noisy_image
     for i in range(iters):
