@@ -10,6 +10,6 @@ logger.setLevel(logging.INFO)
 logger.info("__init__ run")
 print("__init__ run")
 
-import gaussian
-import OF_gaussian
-import random
+from image_denoising import gaussian
+from image_denoising import OF_gaussian
+from image_denoising import random
