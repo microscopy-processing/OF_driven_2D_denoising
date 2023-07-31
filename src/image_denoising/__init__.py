@@ -8,3 +8,4 @@ logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.DEBUG)
 
 logger.info("__init__ run")
+print("__init__ run")
