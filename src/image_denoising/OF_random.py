@@ -99,7 +99,7 @@ def denoise(
 
     return denoised_image, PSNR_vs_iteration
 
-def denoise(warp_B_to_A, noisy_image, iters=50, mean_RD=0.0, sigma_RD=1.0, l=3, w=2, sigma_OF=0.3):
+def _denoise(warp_B_to_A, noisy_image, iters=50, mean_RD=0.0, sigma_RD=1.0, l=3, w=2, sigma_OF=0.3):
     image_denoising.logger.info(f"iters={iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
     acc_image = np.zeros_like(noisy_image, dtype=np.float32)
     acc_image[...] = noisy_image

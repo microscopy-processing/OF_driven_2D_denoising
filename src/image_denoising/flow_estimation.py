@@ -4,12 +4,19 @@ import image_denoising
 #from motion_estimation import farneback
 #from motion_estimation import predict
 import motion_estimation
+import logging
+
+#image_denoising.logger.setLevel(logging.CRITICAL)
+#image_denoising.logger.setLevel(logging.ERROR)
+image_denoising.logger.setLevel(logging.WARNING)
+#image_denoising.logger.setLevel(logging.INFO)
+#image_denoising.logger.setLevel(logging.DEBUG)
 
 def get_flow_to_project_A_to_B(A, B, l=3, w=15, prev_flow=None, sigma=1.5, iterations=5):
     # projection(next, flow) ~ prev
     flow = motion_estimation.farneback.get_flow(
-        reference=A,
-        target=B,
+        reference=B,
+        target=A,
         prev_flow=prev_flow,
         pyr_scale=0.5,
         levels=l,
