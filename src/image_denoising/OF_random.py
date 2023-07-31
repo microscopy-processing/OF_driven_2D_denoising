@@ -7,6 +7,7 @@ from color_transforms import YCoCg as YUV
 from information_theory.distortion import PSNR
 import information_theory
 import image_denoising
+import logging
 
 if __debug__:
     from matplotlib import pyplot as plt
@@ -63,19 +64,19 @@ def denoise(
         GT=None):
 
     image_denoising.logger.info(f"iters={iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
-    if __debug__:
+    if image_denoising.logger.getEffectiveLevel() < logging.INFO:
         PSNR_vs_iteration = []
 
     acc_image = np.zeros_like(noisy_image, dtype=np.float32)
     acc_image[...] = noisy_image
     denoised_image = noisy_image
     for i in range(iters):
-        if __debug__:
+        if image_denoising.logger.getEffectiveLevel() < logging.INFO:
             fig, axs = plt.subplots(1, 2)
             prev = denoised_image
             print(f"iter={i}", end=' ')
         denoised_image = acc_image/(i+1)
-        if __debug__:
+        if image_denoising.logger.getEffectiveLevel() < logging.INFO:
             if GT != None:
                 _PSNR = information_theory.distortion.PSNR(denoised_image, GT)
             else:
@@ -97,7 +98,10 @@ def denoise(
         acc_image += randomized_and_compensated_noisy_image
     denoised_image = acc_image/(iters + 1)
 
-    return denoised_image, PSNR_vs_iteration
+    if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+        return denoised_image, PSNR_vs_iteration
+    else:
+        return denoised_image, None
 
 def _denoise(warp_B_to_A, noisy_image, iters=50, mean_RD=0.0, sigma_RD=1.0, l=3, w=2, sigma_OF=0.3):
     image_denoising.logger.info(f"iters={iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
