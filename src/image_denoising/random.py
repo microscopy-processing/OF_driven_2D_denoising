@@ -3,7 +3,7 @@ import cv2
 from . import flow_estimation
 #pip install "color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/color_transforms"
 from color_transforms import YCoCg as YUV
-#pip install "information_theiry @ git+https://github.com/vicente-gonzalez-ruiz/information_theiry"
+#pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
 from information_theory.distortion import PSNR
 import information_theory
 
