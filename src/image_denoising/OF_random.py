@@ -9,7 +9,7 @@ import information_theory
 import image_denoising
 import logging
 
-if __debug__:
+if image_denoising.logger.getEffectiveLevel() < logging.INFO:
     from matplotlib import pyplot as plt
 
     def normalize(img):
@@ -46,7 +46,7 @@ def RGB_warp_B_to_A(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
     #A_luma = np.log(YUV.from_RGB(A.astype(np.int16))[..., 0] + 1)
     #B_luma = np.log(YUV.from_RGB(B.astype(np.int16))[..., 0] + 1)
     flow = flow_estimation.get_flow_to_project_A_to_B(A_luma, B_luma, l, w, prev_flow, sigma)
-    return project(B, flow)
+    return flow_estimation.project(B, flow)
 
 def warp_B_to_A(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
     flow = flow_estimation.get_flow_to_project_A_to_B(A, B, l, w, prev_flow, sigma)
@@ -55,7 +55,7 @@ def warp_B_to_A(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
 def denoise(
         warp_B_to_A,
         noisy_image,
-        iters=50,
+        N_iters=50,
         mean_RD=0.0,
         sigma_RD=1.0,
         l=3,
@@ -63,26 +63,24 @@ def denoise(
         sigma_OF=0.3,
         GT=None):
 
-    image_denoising.logger.info(f"iters={iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
+    image_denoising.logger.info(f"N_iters={N_iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
     if image_denoising.logger.getEffectiveLevel() < logging.INFO:
         PSNR_vs_iteration = []
 
     acc_image = np.zeros_like(noisy_image, dtype=np.float32)
     acc_image[...] = noisy_image
     denoised_image = noisy_image
-    for i in range(iters):
-        print(f"{i}/{iters}", end=' ')
+    for i in range(N_iters):
+        print(f"{i}/{N_iters}", end=' ')
         if image_denoising.logger.getEffectiveLevel() < logging.INFO:
             fig, axs = plt.subplots(1, 2)
             prev = denoised_image
-            print(f"iter={i}", end=' ')
         denoised_image = acc_image/(i+1)
         if image_denoising.logger.getEffectiveLevel() < logging.INFO:
             if GT != None:
                 _PSNR = information_theory.distortion.PSNR(denoised_image, GT)
             else:
                 _PSNR = 0.0
-            print(f"PSNR={_PSNR}")
             PSNR_vs_iteration.append(_PSNR)
             axs[0].imshow(denoised_image.astype(np.uint8))
             axs[0].set_title(f"iter {i} " + f"({_PSNR:4.2f}dB)")
@@ -97,7 +95,7 @@ def denoise(
             w=w,
             sigma=sigma_OF)
         acc_image += randomized_and_compensated_noisy_image
-    denoised_image = acc_image/(iters + 1)
+    denoised_image = acc_image/(N_iters + 1)
     print()
 
     if image_denoising.logger.getEffectiveLevel() < logging.INFO:
@@ -105,16 +103,16 @@ def denoise(
     else:
         return denoised_image, None
 
-def _denoise(warp_B_to_A, noisy_image, iters=50, mean_RD=0.0, sigma_RD=1.0, l=3, w=2, sigma_OF=0.3):
-    image_denoising.logger.info(f"iters={iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
+def _denoise(warp_B_to_A, noisy_image, N_iters=50, mean_RD=0.0, sigma_RD=1.0, l=3, w=2, sigma_OF=0.3):
+    image_denoising.logger.info(f"N_iters={N_iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
     acc_image = np.zeros_like(noisy_image, dtype=np.float32)
     acc_image[...] = noisy_image
-    for i in range(iters):
+    for i in range(N_iters):
         print(f"iter={i}", end=' ')
         denoised_image = acc_image/(i+1)
         randomized_noisy_image = randomize(noisy_image, mean_RD, sigma_RD).astype(np.float32)
         randomized_and_compensated_noisy_image = warp_B_to_A(A=randomized_noisy_image, B=denoised_image, l=l, w=w, sigma=sigma_OF)
         acc_image += randomized_and_compensated_noisy_image
-    denoised_image = acc_image/(iters + 1)
+    denoised_image = acc_image/(N_iters + 1)
     print()
     return denoised_image

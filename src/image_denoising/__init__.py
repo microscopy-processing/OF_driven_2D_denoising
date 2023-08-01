@@ -7,8 +7,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 #logger.setLevel(logging.DEBUG)
 
-logger.info(f"__init__ run")
+logger.info(f"Logging level: {logger.getEffectiveLevel()}")
 
-from image_denoising import gaussian
-from image_denoising import OF_gaussian
-from image_denoising import OF_random
+#from image_denoising import gaussian
+#from image_denoising import OF_gaussian
+#from image_denoising import OF_random

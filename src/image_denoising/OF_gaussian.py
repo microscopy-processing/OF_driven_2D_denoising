@@ -5,11 +5,12 @@ import scipy
 import math
 from . import kernels
 from . import flow_estimation
-
 #pip install "color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/color_transforms"
 from color_transforms import YCoCg as YUV
+import image_denoising
+import logging
 
-if __debug__:
+if image_denoising.logger.getEffectiveLevel() < logging.INFO:
     from matplotlib import pyplot as plt
 
     def normalize(img):
@@ -99,7 +100,7 @@ def gray_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5):
     filtered_noisy_image = (filtered_noisy_image_in_vertical + filtered_noisy_image_in_horizontal)/2
     return filtered_noisy_image
 
-def color_vertical_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5):
+def RGB_vertical_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5):
     #print("v1")
     KL = kernel.size
     KL2 = KL//2
@@ -126,7 +127,7 @@ def color_vertical_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.
     extended_Y = YUV.from_RGB(extended_noisy_image.astype(np.int16))[..., 0]
     extended_Y = extended_Y.astype(np.float32)
     extended_noisy_image = extended_noisy_image.astype(np.float32)
-    print(np.max(extended_Y), np.min(extended_Y))
+    #print(np.max(extended_Y), np.min(extended_Y))
     filtered_noisy_image = []
     N_rows = noisy_image.shape[0]
     N_cols = noisy_image.shape[1]
@@ -155,44 +156,73 @@ def color_vertical_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.
     filtered_noisy_image = np.stack(filtered_noisy_image, axis=0)[0:noisy_image.shape[0], 0:noisy_image.shape[1], :]
     return filtered_noisy_image
 
-def color_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5):
-    filtered_noisy_image_Y = color_vertical_gaussian_filtering(noisy_image, kernel, l, w, sigma)
-    filtered_noisy_image_YX = color_vertical_gaussian_filtering(np.transpose(filtered_noisy_image_Y, (1, 0, 2)), kernel, l, w, sigma)
+def RGB_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5):
+    filtered_noisy_image_Y = RGB_vertical_OF_gaussian_filtering(noisy_image, kernel, l, w, sigma)
+    filtered_noisy_image_YX = RGB_vertical_OF_gaussian_filtering(np.transpose(filtered_noisy_image_Y, (1, 0, 2)), kernel, l, w, sigma)
     OF_filtered_noisy_image = np.transpose(filtered_noisy_image_YX, (1, 0, 2))
     return OF_filtered_noisy_image
 
 
-def filter_gray_image(noisy_image, sigma_kernel=2.5, N_iters=1, l=3, w=9, sigma_OF=2.5):
-    kernel = kernels.get_gaussian_kernel(sigma_kernel)
-    denoised = noisy_image.copy()
-    for i in range(N_iters):
-        if __debug__:
-            prev = denoised
-        denoised = gray_OF_gaussian_filtering(denoised, kernel, l, w, sigma_OF)
-        if __debug__:
-            fig, axs = plt.subplots(1, 2, figsize=(10, 20))
-            axs[0].imshow(normalize(denoised), cmap="gray")
-            axs[0].set_title(f"iter {i}")
-            axs[1].imshow(normalize(denoised - prev + 128), cmap="gray")
-            axs[1].set_title(f"diff")
-            plt.show()
-            print(f"\niter={i}")
-    return denoised
+def filter_gray_image(noisy_image, sigma_kernel=2.5, N_iters=1, l=3, w=9, sigma_OF=2.5, GT=None):
 
-def filter_color_image(noisy_image, sigma_kernel=2.5, N_iters=1, l=3, w=9, sigma_OF=2.5):
+    image_denoising.logger.info(f"sigma_kernel={sigma_kernel} N_iters={N_iters} l={l} w={w} sigma_OF={sigma_OF}")
+    if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+        PSNR_vs_iteration = []
+
     kernel = kernels.get_gaussian_kernel(sigma_kernel)
-    denoised = noisy_image.copy()
+    denoised_image = noisy_image.copy()
     for i in range(N_iters):
-        if __debug__:
-            prev = denoised
-        denoised = color_OF_gaussian_filtering(denoised, kernel, l, w, sigma_OF)
-        if __debug__:
+        if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+            prev = denoised_image
+        denoised_image = gray_OF_gaussian_filtering(denoised_image, kernel, l, w, sigma_OF)
+        if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+            if GT != None:
+                _PSNR = information_theory.distortion.avg_PSNR(denoised_image_image, GT)
+            else:
+                _PSNR = 0.0
+            PSNR_vs_iteration.append(_PSNR)
             fig, axs = plt.subplots(1, 2, figsize=(10, 20))
-            axs[0].imshow(normalize(denoised), cmap="gray")
-            axs[0].set_title(f"iter {i}")
-            axs[1].imshow(normalize(denoised - prev + 128), cmap="gray")
+            axs[0].imshow(normalize(denoised_image), cmap="gray")
+            axs[0].set_title(f"iter {i} " + f"({_PSNR:4.2f}dB)")
+            axs[1].imshow(normalize(denoised_image - prev + 128), cmap="gray")
             axs[1].set_title(f"diff")
             plt.show()
-            print(f"\niter={i}")
-    return denoised
+    print()
+
+    if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+        return denoised_image, PSNR_vs_iteration
+    else:
+        return denoised_image, None
+
+def filter_RGB_image(noisy_image, sigma_kernel=2.5, N_iters=1, l=3, w=9, sigma_OF=2.5, GT=None):
+
+    image_denoising.logger.info(f"sigma_kernel={sigma_kernel} N_iters={N_iters} l={l} w={w} sigma_OF={sigma_OF}")
+    if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+        PSNR_vs_iteration = []
+    
+    kernel = kernels.get_gaussian_kernel(sigma_kernel)
+    denoised_image = noisy_image.copy()
+    for i in range(N_iters):
+        if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+            prev = denoised_image
+        denoised_image = RGB_OF_gaussian_filtering(denoised_image, kernel, l, w, sigma_OF)
+        if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+            if GT != None:
+                _PSNR = information_theory.distortion.avg_PSNR(denoised_image_image, GT)
+            else:
+                _PSNR = 0.0
+            PSNR_vs_iteration.append(_PSNR)
+            fig, axs = plt.subplots(1, 2, figsize=(10, 20))
+            axs[0].imshow(normalize(denoised_image).astype(np.uint8))
+            axs[0].set_title(f"iter {i} " + f"({_PSNR:4.2f}dB)")
+            axs[1].imshow(normalize(denoised_image - prev + 128).astype(np.uint8))
+            axs[1].set_title(f"diff")
+            plt.show()
+    print()
+
+    if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+        return denoised_image, PSNR_vs_iteration
+    else:
+        return denoised_image, None
+
 
