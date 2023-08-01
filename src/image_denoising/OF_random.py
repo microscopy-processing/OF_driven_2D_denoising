@@ -71,6 +71,7 @@ def denoise(
     acc_image[...] = noisy_image
     denoised_image = noisy_image
     for i in range(iters):
+        print(f"{i}/{iters}", end=' ')
         if image_denoising.logger.getEffectiveLevel() < logging.INFO:
             fig, axs = plt.subplots(1, 2)
             prev = denoised_image
@@ -97,6 +98,7 @@ def denoise(
             sigma=sigma_OF)
         acc_image += randomized_and_compensated_noisy_image
     denoised_image = acc_image/(iters + 1)
+    print()
 
     if image_denoising.logger.getEffectiveLevel() < logging.INFO:
         return denoised_image, PSNR_vs_iteration
