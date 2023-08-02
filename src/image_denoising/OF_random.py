@@ -6,10 +6,17 @@ from color_transforms import YCoCg as YUV
 #pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
 from information_theory.distortion import PSNR
 import information_theory
-import image_denoising
-import logging
+#import image_denoising
 
-if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+import logging
+logger = logging.getLogger(__name__)
+#logging.basicConfig(format="[%(filename)s:%(lineno)s %(funcName)s()] %(message)s")
+#logger.setLevel(logging.CRITICAL)
+#logger.setLevel(logging.ERROR)
+logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.INFO)
+
+if logger.getEffectiveLevel() < logging.WARNING:
     from matplotlib import pyplot as plt
 
     def normalize(img):
@@ -29,7 +36,7 @@ def randomize(image, mean=0, std_dev=1.0):
     displacements_x = displacements_x.astype(np.int32)
     displacements_y = displacements_y.astype(np.int32)
     
-    image_denoising.logger.debug(np.max(displacements_x), np.max(displacements_y))
+    logger.debug(np.max(displacements_x), np.max(displacements_y))
     randomized_x_coords = flattened_x_coords + displacements_x
     randomized_y_coords = flattened_y_coords + displacements_y
     randomized_x_coords = np.clip(randomized_x_coords, 0, width - 1) # Clip the randomized coordinates to stay within image bounds
@@ -63,8 +70,8 @@ def denoise(
         sigma_OF=0.3,
         GT=None):
 
-    image_denoising.logger.info(f"N_iters={N_iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
-    if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+    logger.info(f"N_iters={N_iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
+    if logger.getEffectiveLevel() < logging.WARNING:
         PSNR_vs_iteration = []
 
     acc_image = np.zeros_like(noisy_image, dtype=np.float32)
@@ -72,11 +79,11 @@ def denoise(
     denoised_image = noisy_image
     for i in range(N_iters):
         print(f"{i}/{N_iters}", end=' ')
-        if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+        if logger.getEffectiveLevel() < logging.WARNING:
             fig, axs = plt.subplots(1, 2)
             prev = denoised_image
         denoised_image = acc_image/(i+1)
-        if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+        if logger.getEffectiveLevel() < logging.WARNING:
             if GT != None:
                 _PSNR = information_theory.distortion.PSNR(denoised_image, GT)
             else:
@@ -98,13 +105,13 @@ def denoise(
     denoised_image = acc_image/(N_iters + 1)
     print()
 
-    if image_denoising.logger.getEffectiveLevel() < logging.INFO:
+    if logger.getEffectiveLevel() < logging.WARNING:
         return denoised_image, PSNR_vs_iteration
     else:
         return denoised_image, None
 
 def _denoise(warp_B_to_A, noisy_image, N_iters=50, mean_RD=0.0, sigma_RD=1.0, l=3, w=2, sigma_OF=0.3):
-    image_denoising.logger.info(f"N_iters={N_iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
+    logger.info(f"N_iters={N_iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
     acc_image = np.zeros_like(noisy_image, dtype=np.float32)
     acc_image[...] = noisy_image
     for i in range(N_iters):

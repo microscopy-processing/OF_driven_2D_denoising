@@ -5,12 +5,24 @@ import image_denoising
 #from motion_estimation import predict
 import motion_estimation
 import logging
+import image_denoising
 
 #image_denoising.logger.setLevel(logging.CRITICAL)
 #image_denoising.logger.setLevel(logging.ERROR)
-image_denoising.logger.setLevel(logging.WARNING)
+#image_denoising.logger.setLevel(logging.WARNING)
 #image_denoising.logger.setLevel(logging.INFO)
 #image_denoising.logger.setLevel(logging.DEBUG)
+
+import logging
+logger = logging.getLogger(__name__)
+#logging.basicConfig(format="[%(filename)s:%(lineno)s %(funcName)s()] %(message)s")
+#logger.setLevel(logging.CRITICAL)
+#logger.setLevel(logging.ERROR)
+#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.INFO)
+#logger.setLevel(logging.DEBUG)
+
+#image_denoising.logger.info(f"Logging level: {image_denoising.logger.getEffectiveLevel()}")
 
 def get_flow_to_project_A_to_B(A, B, l=3, w=15, prev_flow=None, sigma=1.5, iterations=5):
     # projection(next, flow) ~ prev
@@ -31,8 +43,8 @@ def get_flow_to_project_A_to_B(A, B, l=3, w=15, prev_flow=None, sigma=1.5, itera
     #                                    flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN
     #                                   )
     #flow[...] = 0.0
-    image_denoising.logger.info(f"avg_OF={np.average(np.abs(flow)):4.2f}")
-    image_denoising.logger.debug(f"l={l} w={w} sigma={sigma} iters={iterations}")
+    logger.info(f"avg_OF={np.average(np.abs(flow)):4.2f}")
+    logger.debug(f"l={l} w={w} sigma={sigma} iters={iterations}")
 
     #print(f"avg_OF={np.average(np.abs(flow))}, l={l}, w={w}, sigma={sigma}", end=' ')
     return flow
