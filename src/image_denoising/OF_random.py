@@ -17,13 +17,12 @@ logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
 #logger.setLevel(logging.DEBUG)
 
-if logger.getEffectiveLevel() < logging.WARNING:
-    from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt
 
-    def normalize(img):
-        min_img = np.min(img)
-        max_img = np.max(img)
-        return 255*((img - min_img)/(max_img - min_img))
+def normalize(img):
+    min_img = np.min(img)
+    max_img = np.max(img)
+    return 255*((img - min_img)/(max_img - min_img))
 
 def randomize(image, mean=0, std_dev=1.0):
     height, width = image.shape[:2]
@@ -72,7 +71,7 @@ def filter_image(
         GT=None):
 
     logger.info(f"N_iters={N_iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
-    if logger.getEffectiveLevel() < logging.WARNING:
+    if logger.getEffectiveLevel() <= logging.INFO:
         PSNR_vs_iteration = []
 
     acc_image = np.zeros_like(noisy_image, dtype=np.float32)
@@ -80,11 +79,11 @@ def filter_image(
     denoised_image = noisy_image
     for i in range(N_iters):
         print(f"{i}/{N_iters}", end=' ')
-        if logger.getEffectiveLevel() < logging.WARNING:
+        if logger.getEffectiveLevel() <= logging.DEBUG:
             fig, axs = plt.subplots(1, 2)
             prev = denoised_image
         denoised_image = acc_image/(i+1)
-        if logger.getEffectiveLevel() < logging.WARNING:
+        if logger.getEffectiveLevel() <= logging.DEBUG:
             if GT != None:
                 _PSNR = information_theory.distortion.PSNR(denoised_image, GT)
             else:
@@ -106,7 +105,7 @@ def filter_image(
     denoised_image = acc_image/(N_iters + 1)
     print()
 
-    if logger.getEffectiveLevel() < logging.WARNING:
+    if logger.getEffectiveLevel() <= logging.INFO:
         return denoised_image, PSNR_vs_iteration
     else:
         return denoised_image, None
