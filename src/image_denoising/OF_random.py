@@ -59,7 +59,7 @@ def warp_B_to_A(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
     flow = flow_estimation.get_flow_to_project_A_to_B(A, B, l, w, prev_flow, sigma)
     return flow_estimation.project(B, flow)
 
-def denoise(
+def filter_image(
         warp_B_to_A,
         noisy_image,
         N_iters=50,
