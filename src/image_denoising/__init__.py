@@ -8,5 +8,5 @@
 #logger.setLevel(logging.DEBUG)
 
 from image_denoising import gaussian
-from image_denoising import OF_gaussian
+#from image_denoising import OF_gaussian
 from image_denoising import OF_random

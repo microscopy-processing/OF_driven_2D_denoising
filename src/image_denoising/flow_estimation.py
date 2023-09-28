@@ -20,7 +20,7 @@ logger.setLevel(logging.WARNING)
 #pip install "color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/motion_estimation"
 import motion_estimation
 
-class Farneback_Flow_Estimator(motion_estimation.frarneback.Estimator_in_CPU):
+class Farneback_Flow_Estimator(motion_estimation.farneback.Estimator_in_CPU):
 
     def __init__(self,
                  levels=3,
@@ -37,18 +37,18 @@ class Farneback_Flow_Estimator(motion_estimation.frarneback.Estimator_in_CPU):
                          fast_piramids,
                          win_side,
                          iters,
-                         poly_n=,
+                         poly_n,
                          pyr_sigma,
                          flags)
     
-    def get_flow_to_project_A_to_B(A, B):
+    def get_flow_to_project_A_to_B(self, A, B):
         flow = self.get_flow(target=A, reference=B, prev_flow=None)
         return flow
     
 def project(image, flow):
-    warped_image = motion_estimation.predict.warp(
-        reference=image,
-        flow=flow,
+    projection = motion_estimation.project(
+        image,
+        flow,
         interpolation_mode=cv2.INTER_LINEAR,
         extension_mode=cv2.BORDER_REPLICATE)
     #height, width = flow.shape[:2]
@@ -62,7 +62,7 @@ def project(image, flow):
     #                         #interpolation=cv2.INTER_NEAREST,
     #                         #interpolation=cv2.INTER_AREA,
     #                         borderMode=cv2.BORDER_REPLICATE)
-    return warped_image
+    return projection
 
 
 '''

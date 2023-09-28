@@ -24,7 +24,7 @@ def normalize(img):
     max_img = np.max(img)
     return 255*((img - min_img)/(max_img - min_img))
 
-def randomize(image, mean=0, std_dev=1.0):
+def randomize(self, image, mean=0, std_dev=1.0):
     height, width = image.shape[:2]
     x_coords, y_coords = np.meshgrid(range(width), range(height)) # Create a grid of coordinates
     flattened_x_coords = x_coords.flatten()
@@ -35,7 +35,7 @@ def randomize(image, mean=0, std_dev=1.0):
     #displacements_y *= max_distance_y
     displacements_x = displacements_x.astype(np.int32)
     displacements_y = displacements_y.astype(np.int32)
-    
+
     logger.debug(f"{np.max(displacements_x)}, {np.max(displacements_y)}")
     randomized_x_coords = flattened_x_coords + displacements_x
     randomized_y_coords = flattened_y_coords + displacements_y
@@ -46,7 +46,105 @@ def randomize(image, mean=0, std_dev=1.0):
     randomized_image = np.zeros_like(image)
     randomized_image[randomized_y_coords, randomized_x_coords] = image[flattened_y_coords, flattened_x_coords]
     return randomized_image
+    
+class Filter_Y_Image(flow_estimation.Farneback_Flow_Estimator):
 
+    def __init__(self,
+                 levels=3,
+                 window_side=15,
+                 sigma=1.5):
+
+        super().__init__(levels=levels,
+                         pyr_scale=0.5,
+                         fast_piramids=False,
+                         win_side=window_side,
+                         iters=5,
+                         poly_n=5,
+                         pyr_sigma=1.5,
+                         flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN)
+
+        self.sigma = sigma
+
+    def warp_B_to_A(self, A, B, levels=3, window_side=15, sigma=1.5):
+        flow = self.get_flow_to_project_A_to_B(A, B, levels, window_side, sigma)
+        return self.project(B, flow)
+
+    def filter(self,
+               noisy_image,
+               N_iters=50,
+               mean_RD=0.0,
+               sigma_RD=1.0,
+               l=3,
+               w=2,
+               sigma_OF=0.3,
+               GT=None):
+
+        logger.info(f"N_iters={N_iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
+        if logger.getEffectiveLevel() <= logging.INFO:
+            PSNR_vs_iteration = []
+
+        acc_image = np.zeros_like(noisy_image, dtype=np.float32)
+        acc_image[...] = noisy_image
+        denoised_image = noisy_image
+        for i in range(N_iters):
+            print(f"{i}/{N_iters}", end=' ')
+            if logger.getEffectiveLevel() <= logging.DEBUG:
+                fig, axs = plt.subplots(1, 2)
+                prev = denoised_image
+            denoised_image = acc_image/(i+1)
+            if logger.getEffectiveLevel() <= logging.DEBUG:
+                if GT != None:
+                    _PSNR = information_theory.distortion.PSNR(denoised_image, GT)
+                else:
+                    _PSNR = 0.0
+                PSNR_vs_iteration.append(_PSNR)
+                axs[0].imshow(denoised_image.astype(np.uint8))
+                axs[0].set_title(f"iter {i} " + f"({_PSNR:4.2f}dB)")
+                axs[1].imshow(normalize(prev - denoised_image + 128).astype(np.uint8), cmap="gray")
+                axs[1].set_title(f"diff")
+                plt.show()
+            randomized_noisy_image = randomize(
+                noisy_image,
+                mean_RD,
+                sigma_RD).astype(np.float32)
+            randomized_and_compensated_noisy_image = self.project(
+                randomized_noisy_image,
+                denoised_image,
+                l,
+                w,
+                sigma_OF)
+            acc_image += randomized_and_compensated_noisy_image
+        denoised_image = acc_image/(N_iters + 1)
+        print()
+
+        if logger.getEffectiveLevel() <= logging.INFO:
+            return denoised_image, PSNR_vs_iteration
+        else:
+            return denoised_image, None
+
+class Filter_RGB_Image(Filter_Y_Image):
+
+    def __init__(self,
+                 levels=3,
+                 window_side=15,
+                 sigma=1.5):
+
+        super().__init__(levels,
+                         window_side,
+                         sigma)
+
+    def warp_B_to_A(self, A, B, levels=3, window_side=15, sigma=1.5):
+        A_luma = YUV.from_RGB(A.astype(np.int16))[..., 0]
+        B_luma = YUV.from_RGB(B.astype(np.int16))[..., 0]
+        #A_luma = np.log(YUV.from_RGB(A.astype(np.int16))[..., 0] + 1)
+        #B_luma = np.log(YUV.from_RGB(B.astype(np.int16))[..., 0] + 1)
+        return super().warp_B_to_A(A_luma,
+                                   B_luma,
+                                   levels,
+                                   window_side,
+                                   sigma)
+
+'''
 def RGB_warp_B_to_A(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
     A_luma = YUV.from_RGB(A.astype(np.int16))[..., 0]
     B_luma = YUV.from_RGB(B.astype(np.int16))[..., 0]
@@ -58,7 +156,7 @@ def RGB_warp_B_to_A(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
 def warp_B_to_A(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
     flow = flow_estimation.get_flow_to_project_A_to_B(A, B, l, w, prev_flow, sigma)
     return flow_estimation.project(B, flow)
-
+                                   
 def filter_image(
         warp_B_to_A,
         noisy_image,
@@ -123,3 +221,4 @@ def _denoise(warp_B_to_A, noisy_image, N_iters=50, mean_RD=0.0, sigma_RD=1.0, l=
     denoised_image = acc_image/(N_iters + 1)
     print()
     return denoised_image
+'''
