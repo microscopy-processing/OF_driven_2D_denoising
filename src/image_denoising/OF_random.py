@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(filename)s:%(lineno)s %(funcName)s()] %(message)s")
 #logger.setLevel(logging.CRITICAL)
 #logger.setLevel(logging.ERROR)
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 from matplotlib import pyplot as plt
 
@@ -24,7 +24,7 @@ def normalize(img):
     max_img = np.max(img)
     return 255*((img - min_img)/(max_img - min_img))
 
-def randomize(self, image, mean=0, std_dev=1.0):
+def randomize(image, mean=0, std_dev=1.0):
     height, width = image.shape[:2]
     x_coords, y_coords = np.meshgrid(range(width), range(height)) # Create a grid of coordinates
     flattened_x_coords = x_coords.flatten()
@@ -36,7 +36,7 @@ def randomize(self, image, mean=0, std_dev=1.0):
     displacements_x = displacements_x.astype(np.int32)
     displacements_y = displacements_y.astype(np.int32)
 
-    logger.debug(f"{np.max(displacements_x)}, {np.max(displacements_y)}")
+    logger.debug(f"np.max(displacements_x)={np.max(displacements_x)} np.max(displacements_y)={np.max(displacements_y)}")
     randomized_x_coords = flattened_x_coords + displacements_x
     randomized_y_coords = flattened_y_coords + displacements_y
     randomized_x_coords = np.clip(randomized_x_coords, 0, width - 1) # Clip the randomized coordinates to stay within image bounds
@@ -65,9 +65,9 @@ class Filter_Y_Image(flow_estimation.Farneback_Flow_Estimator):
 
         self.sigma = sigma
 
-    def warp_B_to_A(self, A, B, levels=3, window_side=15, sigma=1.5):
-        flow = self.get_flow_to_project_A_to_B(A, B, levels, window_side, sigma)
-        return self.project(B, flow)
+    def warp_B_to_A(self, A, B):
+        flow = self.get_flow_to_project_A_to_B(A, B)
+        return flow_estimation.project(B, flow)
 
     def filter(self,
                noisy_image,
@@ -107,12 +107,9 @@ class Filter_Y_Image(flow_estimation.Farneback_Flow_Estimator):
                 noisy_image,
                 mean_RD,
                 sigma_RD).astype(np.float32)
-            randomized_and_compensated_noisy_image = self.project(
-                randomized_noisy_image,
-                denoised_image,
-                l,
-                w,
-                sigma_OF)
+            randomized_and_compensated_noisy_image = self.warp_B_to_A(
+                A=randomized_noisy_image,
+                B=denoised_image)
             acc_image += randomized_and_compensated_noisy_image
         denoised_image = acc_image/(N_iters + 1)
         print()
@@ -133,16 +130,17 @@ class Filter_RGB_Image(Filter_Y_Image):
                          window_side,
                          sigma)
 
-    def warp_B_to_A(self, A, B, levels=3, window_side=15, sigma=1.5):
+    def warp_B_to_A(self, A, B):
+        logger.debug(f"A.shape={A.shape} B.shape={B.shape}")
         A_luma = YUV.from_RGB(A.astype(np.int16))[..., 0]
         B_luma = YUV.from_RGB(B.astype(np.int16))[..., 0]
         #A_luma = np.log(YUV.from_RGB(A.astype(np.int16))[..., 0] + 1)
         #B_luma = np.log(YUV.from_RGB(B.astype(np.int16))[..., 0] + 1)
-        return super().warp_B_to_A(A_luma,
-                                   B_luma,
-                                   levels,
-                                   window_side,
-                                   sigma)
+        flow = self.get_flow_to_project_A_to_B(A_luma, B_luma)
+        logger.debug(f"np.average(np.abs(flow))={np.average(np.abs(flow))}")
+        return flow_estimation.project(B, flow)
+        #return super().warp_B_to_A(A_luma,
+        #                           B_luma)
 
 '''
 def RGB_warp_B_to_A(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
