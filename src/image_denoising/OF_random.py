@@ -14,13 +14,31 @@ logging.basicConfig(format="[%(filename)s:%(lineno)s %(funcName)s()] %(message)s
 #logger.setLevel(logging.CRITICAL)
 #logger.setLevel(logging.ERROR)
 #logger.setLevel(logging.WARNING)
-#logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
+#logger.setLevel(logging.DEBUG)
 
 def normalize(img):
     min_img = np.min(img)
     max_img = np.max(img)
     return 255*((img - min_img)/(max_img - min_img))
+
+def _randomize(image, max_distance_x=10, max_distance_y=10):
+    height, width, _ = image.shape
+    x_coords, y_coords = np.meshgrid(range(width), range(height)) # Create a grid of coordinates
+    flattened_x_coords = x_coords.flatten()
+    flattened_y_coords = y_coords.flatten()
+    displacements_x = np.random.randint(-max_distance_x, max_distance_x + 1, flattened_x_coords.shape)
+    displacements_y = np.random.randint(-max_distance_y, max_distance_y + 1, flattened_y_coords.shape)
+    randomized_x_coords = flattened_x_coords + displacements_x
+    randomized_y_coords = flattened_y_coords + displacements_y
+    randomized_x_coords = np.mod(randomized_x_coords, width) # Use periodic extension to handle border pixels
+    randomized_y_coords = np.mod(randomized_y_coords, height)
+    randomized_image = np.empty_like(image)
+    randomized_image[...] = image
+    randomized_image[randomized_y_coords,
+                     randomized_x_coords, :] = image[flattened_y_coords,
+                                                     flattened_x_coords, :]
+    return randomized_image
 
 def randomize(image, mean=0, std_dev=1.0):
     height, width = image.shape[:2]
@@ -64,9 +82,9 @@ class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
             poly_sigma=1.2,
             flags=flags)
 
-    def warp_B_to_A(self, A, B):
+    def project_B_to_A(self, A, B):
         flow = self.get_flow_to_project_A_to_B(A, B)
-        return flow_estimation.project(B, flow)
+        return flow_estimation.project(A, flow)
 
     def filter(self,
                noisy_image,
@@ -87,19 +105,21 @@ class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
 
         acc_image = np.zeros_like(noisy_image, dtype=np.float32)
         acc_image[...] = noisy_image
-        denoised_image = noisy_image # OJO, sobra
+        if logger.getEffectiveLevel() <= logging.DEBUG:
+            denoised_image = noisy_image
         for i in range(RD_iters):
             print(f"{i}/{RD_iters}", end=' ')
             if logger.getEffectiveLevel() <= logging.DEBUG:
                 fig, axs = plt.subplots(1, 2)
                 prev = denoised_image
             denoised_image = acc_image/(i+1)
-            if logger.getEffectiveLevel() <= logging.DEBUG:
-                if GT != None:
+            if logger.getEffectiveLevel() <= logging.INFO:
+                try:
                     _PSNR = information_theory.distortion.PSNR(denoised_image, GT)
-                else:
+                except:
                     _PSNR = 0.0
                 PSNR_vs_iteration.append(_PSNR)
+            if logger.getEffectiveLevel() <= logging.DEBUG:
                 axs[0].imshow(denoised_image.astype(np.uint8))
                 axs[0].set_title(f"iter {i} " + f"({_PSNR:4.2f}dB)")
                 axs[1].imshow(normalize(prev - denoised_image + 128).astype(np.uint8), cmap="gray")
@@ -109,12 +129,13 @@ class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
                 noisy_image,
                 RD_mean,
                 RD_sigma).astype(np.float32)
-            randomized_and_compensated_noisy_image = self.warp_B_to_A(
-                A=randomized_noisy_image,
-                B=denoised_image)
+            #randomized_noisy_image = randomize(noisy_image)
+            randomized_and_compensated_noisy_image = self.project_A_to_B(
+                A=denoised_image,
+                B=randomized_noisy_image)
             acc_image += randomized_and_compensated_noisy_image
         denoised_image = acc_image/(RD_iters + 1)
-        print()
+        print(flush=True)
 
         if logger.getEffectiveLevel() <= logging.INFO:
             return denoised_image, PSNR_vs_iteration
@@ -140,7 +161,7 @@ class Filter_Color_Image(Filter_Monochrome_Image):
             poly_sigma=1.2,
             flags=flags)
 
-    def warp_B_to_A(self, A, B):
+    def project_A_to_B(self, A, B):
         logger.debug(f"A.shape={A.shape} B.shape={B.shape}")
         A_luma = YUV.from_RGB(A.astype(np.int16))[..., 0]
         B_luma = YUV.from_RGB(B.astype(np.int16))[..., 0]
@@ -148,7 +169,7 @@ class Filter_Color_Image(Filter_Monochrome_Image):
         #B_luma = np.log(YUV.from_RGB(B.astype(np.int16))[..., 0] + 1)
         flow = self.get_flow_to_project_A_to_B(A_luma, B_luma)
         logger.debug(f"np.average(np.abs(flow))={np.average(np.abs(flow))}")
-        return flow_estimation.project(B, flow)
+        return flow_estimation.project(A, flow)
         #return super().warp_B_to_A(A_luma,
         #                           B_luma)
 

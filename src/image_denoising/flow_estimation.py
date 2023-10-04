@@ -27,8 +27,8 @@ class Farneback_Flow_Estimator(motion_estimation.farneback.Estimator_in_CPU):
                  window_side=15, # Applicability window side
                  iters=3, # Number of iterations at each pyramid level
                  poly_n=5, # Size of the pixel neighborhood used to find polynomial expansion in each pixel
-                 poly_sigma=1.2, # Standard deviation of the Gaussian basis used in the polynomial expansion
-                 flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN):
+                 poly_sigma=1.5, # Standard deviation of the Gaussian basis used in the polynomial expansion
+                 flags=0):#cv2.OPTFLOW_FARNEBACK_GAUSSIAN):
         
         super().__init__(levels=levels,
                          pyr_scale=0.5,
@@ -39,7 +39,11 @@ class Farneback_Flow_Estimator(motion_estimation.farneback.Estimator_in_CPU):
                          flags=flags)
     
     def get_flow_to_project_A_to_B(self, A, B):
-        flow = self.get_flow(target=A, reference=B, prev_flow=None)
+        flow = self.get_flow(target=B, reference=A, prev_flow=None)
+        #flow = cv2.calcOpticalFlowFarneback(prev=B, next=A, flow=None,
+        #                                pyr_scale=0.5, levels=self.levels, winsize=self.win_side,
+        #                                iterations=3, poly_n=5, poly_sigma=self.poly_sigma,
+        #                                flags=0)
         return flow
     
 def project(image, flow):
