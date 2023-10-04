@@ -1,13 +1,13 @@
+'''Random image denoising using the optical flow.'''
+
 import numpy as np
 import cv2
 from . import flow_estimation
-#pip install "color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/color_transforms"
-from color_transforms import YCoCg as YUV
-#pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
-from information_theory.distortion import PSNR
+from color_transforms import YCoCg as YUV #pip install "color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/color_transforms"
+from information_theory.distortion import PSNR #pip install "information_theory @ git+https://github.com/vicente-gonzalez-ruiz/information_theory"
 import information_theory
 #import image_denoising
-
+from matplotlib import pyplot as plt
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(filename)s:%(lineno)s %(funcName)s()] %(message)s")
@@ -16,8 +16,6 @@ logging.basicConfig(format="[%(filename)s:%(lineno)s %(funcName)s()] %(message)s
 #logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
 logger.setLevel(logging.DEBUG)
-
-from matplotlib import pyplot as plt
 
 def normalize(img):
     min_img = np.min(img)
@@ -47,23 +45,24 @@ def randomize(image, mean=0, std_dev=1.0):
     randomized_image[randomized_y_coords, randomized_x_coords] = image[flattened_y_coords, flattened_x_coords]
     return randomized_image
     
-class Filter_Y_Image(flow_estimation.Farneback_Flow_Estimator):
+class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
 
-    def __init__(self,
-                 levels=3,
-                 window_side=15,
-                 sigma=1.5):
+    def __init__(
+            self,
+            levels=3, # Pyramid slope. Multiply by 2^levels the searching area if the OFE
+            window_side=15, # Applicability window side
+            iters=3, # Number of iterations at each pyramid level
+            poly_n=5, # Size of the pixel neighborhood used to find polynomial expansion in each pixel
+            poly_sigma=1.0, # Standard deviation of the Gaussian basis used in the polynomial expansion
+            flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN):
 
-        super().__init__(levels=levels,
-                         pyr_scale=0.5,
-                         fast_piramids=False,
-                         win_side=window_side,
-                         iters=5,
-                         poly_n=5,
-                         pyr_sigma=1.5,
-                         flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN)
-
-        self.sigma = sigma
+        super().__init__(
+            levels=levels,
+            window_side=window_side,
+            iters=5,
+            poly_n=5,
+            poly_sigma=1.2,
+            flags=flags)
 
     def warp_B_to_A(self, A, B):
         flow = self.get_flow_to_project_A_to_B(A, B)
@@ -71,23 +70,26 @@ class Filter_Y_Image(flow_estimation.Farneback_Flow_Estimator):
 
     def filter(self,
                noisy_image,
-               N_iters=50,
-               mean_RD=0.0,
-               sigma_RD=1.0,
-               l=3,
-               w=2,
-               sigma_OF=0.3,
+               RD_iters=50,
+               RD_sigma=1.0, # Standard deviation of the maximum random (gaussian-distributed) displacements of the pixels
+               RD_mean=0.0, # Mean of the randomized distances
+               #RD_sigma=1.0,
+               #levels=3,
+               #window_side=2,
+               #poly_n=5,
+               #poly_sigma=0.3,
                GT=None):
 
-        logger.info(f"N_iters={N_iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
+        #logger.info(f"RD_iters={RD_iters} RD_mean={RD_mean} RD_sigma={sigma} levels={levles} window_side={window_side} poly_n={poly_n} poly_sigma={poly_sigma}")
+        logger.info(f"RD_iters={RD_iters} RD_mean={RD_mean} RD_sigma={RD_sigma}")
         if logger.getEffectiveLevel() <= logging.INFO:
             PSNR_vs_iteration = []
 
         acc_image = np.zeros_like(noisy_image, dtype=np.float32)
         acc_image[...] = noisy_image
-        denoised_image = noisy_image
-        for i in range(N_iters):
-            print(f"{i}/{N_iters}", end=' ')
+        denoised_image = noisy_image # OJO, sobra
+        for i in range(RD_iters):
+            print(f"{i}/{RD_iters}", end=' ')
             if logger.getEffectiveLevel() <= logging.DEBUG:
                 fig, axs = plt.subplots(1, 2)
                 prev = denoised_image
@@ -105,13 +107,13 @@ class Filter_Y_Image(flow_estimation.Farneback_Flow_Estimator):
                 plt.show()
             randomized_noisy_image = randomize(
                 noisy_image,
-                mean_RD,
-                sigma_RD).astype(np.float32)
+                RD_mean,
+                RD_sigma).astype(np.float32)
             randomized_and_compensated_noisy_image = self.warp_B_to_A(
                 A=randomized_noisy_image,
                 B=denoised_image)
             acc_image += randomized_and_compensated_noisy_image
-        denoised_image = acc_image/(N_iters + 1)
+        denoised_image = acc_image/(RD_iters + 1)
         print()
 
         if logger.getEffectiveLevel() <= logging.INFO:
@@ -119,16 +121,24 @@ class Filter_Y_Image(flow_estimation.Farneback_Flow_Estimator):
         else:
             return denoised_image, None
 
-class Filter_RGB_Image(Filter_Y_Image):
+class Filter_Color_Image(Filter_Monochrome_Image):
 
-    def __init__(self,
-                 levels=3,
-                 window_side=15,
-                 sigma=1.5):
+    def __init__(
+            self,
+            levels=3, # Pyramid slope. Multiply by 2^levels the searching area if the OFE
+            window_side=15, # Applicability window side
+            iters=3, # Number of iterations at each pyramid level
+            poly_n=5, # Size of the pixel neighborhood used to find polynomial expansion in each pixel
+            poly_sigma=1.0, # Standard deviation of the Gaussian basis used in the polynomial expansion
+            flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN):
 
-        super().__init__(levels,
-                         window_side,
-                         sigma)
+        super().__init__(
+            levels=levels,
+            window_side=window_side,
+            iters=5,
+            poly_n=5,
+            poly_sigma=1.2,
+            flags=flags)
 
     def warp_B_to_A(self, A, B):
         logger.debug(f"A.shape={A.shape} B.shape={B.shape}")

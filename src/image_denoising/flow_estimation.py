@@ -23,23 +23,20 @@ import motion_estimation
 class Farneback_Flow_Estimator(motion_estimation.farneback.Estimator_in_CPU):
 
     def __init__(self,
-                 levels=3,
-                 pyr_scale=0.5,
-                 fast_piramids=False,
-                 win_side=15,
-                 iters=5,
-                 poly_n=5,
-                 pyr_sigma=1.5,
+                 levels=3, # Pyramid slope. Multiply by 2^levels the searching area if the OFE
+                 window_side=15, # Applicability window side
+                 iters=3, # Number of iterations at each pyramid level
+                 poly_n=5, # Size of the pixel neighborhood used to find polynomial expansion in each pixel
+                 poly_sigma=1.2, # Standard deviation of the Gaussian basis used in the polynomial expansion
                  flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN):
         
-        super().__init__(levels,
-                         pyr_scale,
-                         fast_piramids,
-                         win_side,
-                         iters,
-                         poly_n,
-                         pyr_sigma,
-                         flags)
+        super().__init__(levels=levels,
+                         pyr_scale=0.5,
+                         win_side=window_side,
+                         iters=iters,
+                         poly_n=poly_n,
+                         poly_sigma=poly_sigma,
+                         flags=flags)
     
     def get_flow_to_project_A_to_B(self, A, B):
         flow = self.get_flow(target=A, reference=B, prev_flow=None)
