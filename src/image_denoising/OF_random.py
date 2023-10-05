@@ -22,24 +22,6 @@ def normalize(img):
     max_img = np.max(img)
     return 255*((img - min_img)/(max_img - min_img))
 
-def _randomize(image, max_distance_x=10, max_distance_y=10):
-    height, width, _ = image.shape
-    x_coords, y_coords = np.meshgrid(range(width), range(height)) # Create a grid of coordinates
-    flattened_x_coords = x_coords.flatten()
-    flattened_y_coords = y_coords.flatten()
-    displacements_x = np.random.randint(-max_distance_x, max_distance_x + 1, flattened_x_coords.shape)
-    displacements_y = np.random.randint(-max_distance_y, max_distance_y + 1, flattened_y_coords.shape)
-    randomized_x_coords = flattened_x_coords + displacements_x
-    randomized_y_coords = flattened_y_coords + displacements_y
-    randomized_x_coords = np.mod(randomized_x_coords, width) # Use periodic extension to handle border pixels
-    randomized_y_coords = np.mod(randomized_y_coords, height)
-    randomized_image = np.empty_like(image)
-    randomized_image[...] = image
-    randomized_image[randomized_y_coords,
-                     randomized_x_coords, :] = image[flattened_y_coords,
-                                                     flattened_x_coords, :]
-    return randomized_image
-
 def randomize(image, mean=0, std_dev=1.0):
     height, width = image.shape[:2]
     x_coords, y_coords = np.meshgrid(range(width), range(height)) # Create a grid of coordinates
@@ -174,6 +156,24 @@ class Filter_Color_Image(Filter_Monochrome_Image):
         #                           B_luma)
 
 '''
+def _randomize(image, max_distance_x=10, max_distance_y=10):
+    height, width, _ = image.shape
+    x_coords, y_coords = np.meshgrid(range(width), range(height)) # Create a grid of coordinates
+    flattened_x_coords = x_coords.flatten()
+    flattened_y_coords = y_coords.flatten()
+    displacements_x = np.random.randint(-max_distance_x, max_distance_x + 1, flattened_x_coords.shape)
+    displacements_y = np.random.randint(-max_distance_y, max_distance_y + 1, flattened_y_coords.shape)
+    randomized_x_coords = flattened_x_coords + displacements_x
+    randomized_y_coords = flattened_y_coords + displacements_y
+    randomized_x_coords = np.mod(randomized_x_coords, width) # Use periodic extension to handle border pixels
+    randomized_y_coords = np.mod(randomized_y_coords, height)
+    randomized_image = np.empty_like(image)
+    randomized_image[...] = image
+    randomized_image[randomized_y_coords,
+                     randomized_x_coords, :] = image[flattened_y_coords,
+                                                     flattened_x_coords, :]
+    return randomized_image
+
 def RGB_warp_B_to_A(A, B, l=3, w=15, prev_flow=None, sigma=1.5):
     A_luma = YUV.from_RGB(A.astype(np.int16))[..., 0]
     B_luma = YUV.from_RGB(B.astype(np.int16))[..., 0]
