@@ -64,7 +64,7 @@ class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
             poly_sigma=1.2,
             flags=flags)
 
-    def project_B_to_A(self, A, B):
+    def project_A_to_B(self, A, B):
         flow = self.get_flow_to_project_A_to_B(A, B)
         return flow_estimation.project(A, flow)
 
