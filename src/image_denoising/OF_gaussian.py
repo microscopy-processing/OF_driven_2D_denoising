@@ -25,7 +25,7 @@ if logger.getEffectiveLevel() < logging.WARNING:
         max_img = np.max(img)
         return 255*((img - min_img)/(max_img - min_img))
 
-def __get_flow(reference, target, l=3, w=5, prev_flow=None, sigma=0.5):
+def get_flow(reference, target, l=3, w=5, prev_flow=None, sigma=0.5):
     flow = cv2.calcOpticalFlowFarneback(prev=target, next=reference, flow=prev_flow,
                                             pyr_scale=0.5, levels=l, winsize=w,
                                             iterations=3, poly_n=5, poly_sigma=sigma,
@@ -84,9 +84,9 @@ def gray_vertical_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5
         for i in range(KL):
             reference_slice_Y = extended_Y[y + i:y + i + w]
             reference_slice = extended_noisy_image[y + i:y + i + w]
-            flow = flow_estimation.get_flow_to_project_A_to_B(
-                A=reference_slice_Y,
-                B=target_slice_Y,
+            flow = get_flow(
+                reference=reference_slice_Y,
+                target=target_slice_Y,
                 l=l,
                 w=w,
                 prev_flow=None,
@@ -147,9 +147,9 @@ def RGB_vertical_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5)
         for i in range(KL):
             reference_slice_Y = extended_Y[y + i:y + i + w, :]
             reference_slice = extended_noisy_image[y + i:y + i + w, :]
-            flow = flow_estimation.get_flow_to_project_A_to_B(
-                A=reference_slice_Y,
-                B=target_slice_Y,
+            flow = get_flow(
+                reference=reference_slice_Y,
+                target=target_slice_Y,
                 l=l,
                 w=w,
                 prev_flow=None,

@@ -17,7 +17,7 @@ logger.setLevel(logging.WARNING)
 
 #image_denoising.logger.info(f"Logging level: {image_denoising.logger.getEffectiveLevel()}")
 
-#pip install "color_transforms @ git+https://github.com/vicente-gonzalez-ruiz/motion_estimation"
+#pip install "motion_estimation @ git+https://github.com/vicente-gonzalez-ruiz/motion_estimation"
 import motion_estimation
 
 class Farneback_Flow_Estimator(motion_estimation.farneback.Estimator_in_CPU):
