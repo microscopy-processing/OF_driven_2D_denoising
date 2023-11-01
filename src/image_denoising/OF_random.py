@@ -37,10 +37,11 @@ def randomize(image, mean=0, std_dev=1.0):
     logger.debug(f"np.max(displacements_x)={np.max(displacements_x)} np.max(displacements_y)={np.max(displacements_y)}")
     randomized_x_coords = flattened_x_coords + displacements_x
     randomized_y_coords = flattened_y_coords + displacements_y
-    randomized_x_coords = np.clip(randomized_x_coords, 0, width - 1) # Clip the randomized coordinates to stay within image bounds
-    randomized_y_coords = np.clip(randomized_y_coords, 0, height - 1)
-    #randomized_x_coords = np.mod(randomized_x_coords, width) # Apply periodic extension to handle border pixels
-    #randomized_y_coords = np.mod(randomized_y_coords, height)
+    #randomized_x_coords = np.clip(randomized_x_coords, 0, width - 1) # Clip the randomized coordinates to stay within image bounds
+    #randomized_y_coords = np.clip(randomized_y_coords, 0, height - 1)
+    randomized_x_coords = np.mod(randomized_x_coords, width) # Apply periodic extension to handle border pixels
+    randomized_y_coords = np.mod(randomized_y_coords, height)
+    print("1")
     randomized_image = np.zeros_like(image)
     randomized_image[randomized_y_coords, randomized_x_coords] = image[flattened_y_coords, flattened_x_coords]
     return randomized_image
@@ -54,7 +55,8 @@ class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
             iters=3, # Number of iterations at each pyramid level
             poly_n=5, # Size of the pixel neighborhood used to find polynomial expansion in each pixel
             poly_sigma=1.0, # Standard deviation of the Gaussian basis used in the polynomial expansion
-            flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN):
+            flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN,
+            verbosity=0):
 
         super().__init__(
             levels=levels,
@@ -63,6 +65,8 @@ class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
             poly_n=5,
             poly_sigma=1.2,
             flags=flags)
+
+        logger.setLevel(verbosity)
 
     def project_A_to_B(self, A, B):
         flow = self.get_flow_to_project_A_to_B(A, B)
@@ -133,7 +137,8 @@ class Filter_Color_Image(Filter_Monochrome_Image):
             iters=3, # Number of iterations at each pyramid level
             poly_n=5, # Size of the pixel neighborhood used to find polynomial expansion in each pixel
             poly_sigma=1.0, # Standard deviation of the Gaussian basis used in the polynomial expansion
-            flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN):
+            flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN,
+            verbosity=0):
 
         super().__init__(
             levels=levels,
