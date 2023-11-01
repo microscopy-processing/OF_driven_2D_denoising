@@ -88,26 +88,26 @@ class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
 
         #logger.info(f"RD_iters={RD_iters} RD_mean={RD_mean} RD_sigma={sigma} levels={levles} window_side={window_side} poly_n={poly_n} poly_sigma={poly_sigma}")
         self.logger.info(f"RD_iters={RD_iters} RD_mean={RD_mean} RD_sigma={RD_sigma}")
-        if self.logger.getEffectiveLevel() <= logging.INFO:
+        if self.logger.level <= logging.INFO:
             PSNR_vs_iteration = []
 
         acc_image = np.zeros_like(noisy_image, dtype=np.float32)
         acc_image[...] = noisy_image
-        if self.logger.getEffectiveLevel() <= logging.DEBUG:
+        if self.logger.level <= logging.DEBUG:
             denoised_image = noisy_image
         for i in range(RD_iters):
             self.logger.info(f"{i}/{RD_iters}")
-            if self.logger.getEffectiveLevel() <= logging.DEBUG:
+            if self.logger.level <= logging.DEBUG:
                 fig, axs = plt.subplots(1, 2)
                 prev = denoised_image
             denoised_image = acc_image/(i+1)
-            if self.logger.getEffectiveLevel() <= logging.INFO:
+            if self.logger.level <= logging.INFO:
                 try:
                     _PSNR = information_theory.distortion.PSNR(denoised_image, GT)
                 except:
                     _PSNR = 0.0
                 PSNR_vs_iteration.append(_PSNR)
-            if self.logger.getEffectiveLevel() <= logging.DEBUG:
+            if self.logger.level <= logging.DEBUG:
                 axs[0].imshow(denoised_image.astype(np.uint8))
                 axs[0].set_title(f"iter {i} " + f"({_PSNR:4.2f}dB)")
                 axs[1].imshow(self.normalize(prev - denoised_image + 128).astype(np.uint8), cmap="gray")
@@ -125,7 +125,7 @@ class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
         denoised_image = acc_image/(RD_iters + 1)
         print(flush=True)
 
-        if self.logger.getEffectiveLevel() <= logging.INFO:
+        if self.logger.level <= logging.INFO:
             return denoised_image, PSNR_vs_iteration
         else:
             return denoised_image, None
@@ -206,7 +206,7 @@ def filter_image(
         GT=None):
 
     logger.info(f"N_iters={N_iters} mean_RD={mean_RD} sigma_RD={sigma_RD} l={l} w={w} sigma_OF={sigma_OF}")
-    if logger.getEffectiveLevel() <= logging.INFO:
+    if logger.level <= logging.INFO:
         PSNR_vs_iteration = []
 
     acc_image = np.zeros_like(noisy_image, dtype=np.float32)
@@ -214,11 +214,11 @@ def filter_image(
     denoised_image = noisy_image
     for i in range(N_iters):
         print(f"{i}/{N_iters}", end=' ')
-        if logger.getEffectiveLevel() <= logging.DEBUG:
+        if logger.level <= logging.DEBUG:
             fig, axs = plt.subplots(1, 2)
             prev = denoised_image
         denoised_image = acc_image/(i+1)
-        if logger.getEffectiveLevel() <= logging.DEBUG:
+        if logger.level <= logging.DEBUG:
             if GT != None:
                 _PSNR = information_theory.distortion.PSNR(denoised_image, GT)
             else:
@@ -240,7 +240,7 @@ def filter_image(
     denoised_image = acc_image/(N_iters + 1)
     print()
 
-    if logger.getEffectiveLevel() <= logging.INFO:
+    if logger.level <= logging.INFO:
         return denoised_image, PSNR_vs_iteration
     else:
         return denoised_image, None
