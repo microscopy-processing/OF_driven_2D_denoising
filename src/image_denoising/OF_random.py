@@ -96,8 +96,8 @@ class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
         if self.logger.level <= logging.DEBUG:
             denoised_image = noisy_image
         for i in range(RD_iters):
-            self.logger.info(f"{i}/{RD_iters}")
             if self.logger.level <= logging.DEBUG:
+                self.logger.debug(f"{i}/{RD_iters}")
                 fig, axs = plt.subplots(1, 2)
                 prev = denoised_image
             denoised_image = acc_image/(i+1)
