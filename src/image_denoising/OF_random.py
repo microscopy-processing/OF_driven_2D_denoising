@@ -27,7 +27,7 @@ class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
             poly_n=5, # Size of the pixel neighborhood used to find polynomial expansion in each pixel
             poly_sigma=1.0, # Standard deviation of the Gaussian basis used in the polynomial expansion
             flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN,
-            verbosity=0):
+            verbosity=logging.INFO):
 
         super().__init__(
             levels=levels,
@@ -123,7 +123,7 @@ class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
                 B=randomized_noisy_image)
             acc_image += randomized_and_compensated_noisy_image
         denoised_image = acc_image/(RD_iters + 1)
-        print(flush=True)
+        #print(flush=True)
 
         if self.logger.level <= logging.INFO:
             return denoised_image, PSNR_vs_iteration
@@ -140,7 +140,7 @@ class Filter_Color_Image(Filter_Monochrome_Image):
             poly_n=5, # Size of the pixel neighborhood used to find polynomial expansion in each pixel
             poly_sigma=1.0, # Standard deviation of the Gaussian basis used in the polynomial expansion
             flags=cv2.OPTFLOW_FARNEBACK_GAUSSIAN,
-            verbosity=0):
+            verbosity=logging.INFO):
 
         super().__init__(
             levels=levels,
