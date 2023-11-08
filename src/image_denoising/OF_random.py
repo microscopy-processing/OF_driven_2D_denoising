@@ -63,7 +63,7 @@ class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
         displacements_x = displacements_x.astype(np.int32)
         displacements_y = displacements_y.astype(np.int32)
 
-        self.logger.debug(f"np.max(displacements_x)={np.max(displacements_x)} np.max(displacements_y)={np.max(displacements_y)}")
+        self.logger.info(f"np.max(displacements_x)={np.max(displacements_x)} np.max(displacements_y)={np.max(displacements_y)}")
         randomized_x_coords = flattened_x_coords + displacements_x
         randomized_y_coords = flattened_y_coords + displacements_y
         #randomized_x_coords = np.clip(randomized_x_coords, 0, width - 1) # Clip the randomized coordinates to stay within image bounds
