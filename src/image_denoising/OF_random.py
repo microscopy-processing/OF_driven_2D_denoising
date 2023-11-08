@@ -48,7 +48,7 @@ class Filter_Monochrome_Image(flow_estimation.Farneback_Flow_Estimator):
     def normalize(self, img):
         min_img = np.min(img)
         max_img = np.max(img)
-        return 255*((img - min_img)/(max_img - min_img))
+        return 255*((img - min_img + 1)/(max_img - min_img + 1))
 
     def randomize(self, image, mean=0, std_dev=1.0):
         height, width = image.shape[:2]
