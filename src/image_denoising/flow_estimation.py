@@ -19,8 +19,9 @@ logger.setLevel(logging.WARNING)
 
 #pip install "motion_estimation @ git+https://github.com/vicente-gonzalez-ruiz/motion_estimation"
 import motion_estimation
+from motion_estimation._2D.farneback import Estimator_in_CPU
 
-class Farneback_Flow_Estimator(motion_estimation._2D.farneback.Estimator_in_CPU):
+class Farneback_Flow_Estimator(Estimator_in_CPU):
 
     def __init__(self,
                  levels=3, # Pyramid slope. Multiply by 2^levels the searching area if the OFE
