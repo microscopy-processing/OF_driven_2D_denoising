@@ -20,7 +20,7 @@ logger.setLevel(logging.WARNING)
 #pip install "motion_estimation @ git+https://github.com/vicente-gonzalez-ruiz/motion_estimation"
 import motion_estimation
 from motion_estimation._2D.farneback import Estimator_in_CPU
-from motion_estimation._2D.project import project
+from motion_estimation._2D.project import project as cv2_project
 
 class Farneback_Flow_Estimator(Estimator_in_CPU):
 
@@ -49,7 +49,7 @@ class Farneback_Flow_Estimator(Estimator_in_CPU):
         return flow
     
 def project(image, flow):
-    projection = project(
+    projection = cv2_project(
         image,
         flow,
         interpolation_mode=cv2.INTER_LINEAR,
