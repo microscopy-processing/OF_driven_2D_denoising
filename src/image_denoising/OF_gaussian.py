@@ -99,21 +99,6 @@ def gray_vertical_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5
     filtered_noisy_image = np.stack(filtered_noisy_image, axis=0)[0:noisy_image.shape[0], 0:noisy_image.shape[1]]
     return filtered_noisy_image
 
-def __gray_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5):
-    filtered_noisy_image_in_vertical = gray_vertical_OF_gaussian_filtering(noisy_image, kernel, l, w, sigma)
-    transposed_noisy_image = np.transpose(noisy_image, (1, 0))
-    transposed_and_filtered_noisy_image_in_horizontal = gray_vertical_OF_gaussian_filtering(transposed_noisy_image, kernel, l, w, sigma)
-    filtered_noisy_image_in_horizontal = np.transpose(transposed_and_filtered_noisy_image_in_horizontal, (1, 0))
-    filtered_noisy_image = (filtered_noisy_image_in_vertical + filtered_noisy_image_in_horizontal)/2
-    return filtered_noisy_image
-
-def gray_OF_gaussian_filtering(noisy_img, kernel, l=3, w=5, sigma=0.5):
-    filtered_noisy_img_Y = gray_vertical_OF_gaussian_filtering(noisy_img, kernel, l, w, sigma)
-    transposed_filtered_noisy_img_Y = np.transpose(filtered_noisy_img_Y, (1, 0))
-    transposed_filtered_noisy_img_YX = gray_vertical_OF_gaussian_filtering(transposed_filtered_noisy_img_Y, kernel, l, w, sigma)
-    filtered_noisy_img_YX = np.transpose(transposed_filtered_noisy_img_YX, (1, 0))
-    return filtered_noisy_img_YX
-
 def RGB_vertical_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5):
     #print("v1")
     KL = kernel.size
@@ -170,13 +155,27 @@ def RGB_vertical_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5)
     filtered_noisy_image = np.stack(filtered_noisy_image, axis=0)[0:noisy_image.shape[0], 0:noisy_image.shape[1], :]
     return filtered_noisy_image
 
+def __gray_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5):
+    filtered_noisy_image_in_vertical = gray_vertical_OF_gaussian_filtering(noisy_image, kernel, l, w, sigma)
+    transposed_noisy_image = np.transpose(noisy_image, (1, 0))
+    transposed_and_filtered_noisy_image_in_horizontal = gray_vertical_OF_gaussian_filtering(transposed_noisy_image, kernel, l, w, sigma)
+    filtered_noisy_image_in_horizontal = np.transpose(transposed_and_filtered_noisy_image_in_horizontal, (1, 0))
+    filtered_noisy_image = (filtered_noisy_image_in_vertical + filtered_noisy_image_in_horizontal)/2
+    return filtered_noisy_image
+
+def gray_OF_gaussian_filtering(noisy_img, kernel, l=3, w=5, sigma=0.5):
+    filtered_noisy_img_Y = gray_vertical_OF_gaussian_filtering(noisy_img, kernel, l, w, sigma)
+    transposed_filtered_noisy_img_Y = np.transpose(filtered_noisy_img_Y, (1, 0))
+    transposed_filtered_noisy_img_YX = gray_vertical_OF_gaussian_filtering(transposed_filtered_noisy_img_Y, kernel, l, w, sigma)
+    filtered_noisy_img_YX = np.transpose(transposed_filtered_noisy_img_YX, (1, 0))
+    return filtered_noisy_img_YX
+
 def RGB_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5):
     filtered_noisy_image_Y = RGB_vertical_OF_gaussian_filtering(noisy_image, kernel, l, w, sigma)
     filtered_noisy_image_YX = RGB_vertical_OF_gaussian_filtering(np.transpose(filtered_noisy_image_Y, (1, 0, 2)), kernel, l, w, sigma)
     OF_filtered_noisy_image = np.transpose(filtered_noisy_image_YX, (1, 0, 2))
     return OF_filtered_noisy_image
-
-
+    
 def filter_gray_image(noisy_image, sigma_kernel=2.5, N_iters=1, l=3, w=9, sigma_OF=2.5, GT=None):
 
     logger.info(f"sigma_kernel={sigma_kernel} N_iters={N_iters} l={l} w={w} sigma_OF={sigma_OF}")
