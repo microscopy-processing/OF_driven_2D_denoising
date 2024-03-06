@@ -107,7 +107,7 @@ def __gray_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5):
     filtered_noisy_image = (filtered_noisy_image_in_vertical + filtered_noisy_image_in_horizontal)/2
     return filtered_noisy_image
 
-def gray_OF_gaussian_filtering(self, noisy_img, kernel, l=3, w=5, sigma=0.5):
+def gray_OF_gaussian_filtering(noisy_img, kernel, l=3, w=5, sigma=0.5):
     filtered_noisy_img_Y = gray_vertical_OF_gaussian_filtering(noisy_img, kernel, l, w, sigma)
     transposed_filtered_noisy_img_Y = np.transpose(filtered_noisy_img_Y, (1, 0))
     transposed_filtered_noisy_img_YX = gray_vertical_OF_gaussian_filtering(transposed_filtered_noisy_img_Y, kernel, l, w, sigma)
