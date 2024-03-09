@@ -93,7 +93,7 @@ def gray_vertical_OF_gaussian_filtering(noisy_image, kernel, l=3, w=5, sigma=0.5
                 sigma=sigma)
             OF_compensated_slice = flow_estimation.project(reference_slice, flow)
             OF_compensated_line = OF_compensated_slice[(w + 1) >> 1, :]
-            OF_compensated_line = np.roll(OF_compensated_line, -w2)
+            OF_compensated_line = np.roll(OF_compensated_line, -w2) # Creo que si intercambiamos reference_slice por target_slice, esta línea sobra
             horizontal_line += OF_compensated_line * kernel[i]
         filtered_noisy_image.append(horizontal_line)
     filtered_noisy_image = np.stack(filtered_noisy_image, axis=0)[0:noisy_image.shape[0], 0:noisy_image.shape[1]]
